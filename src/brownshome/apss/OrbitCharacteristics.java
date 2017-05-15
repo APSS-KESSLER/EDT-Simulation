@@ -6,8 +6,9 @@ public class OrbitCharacteristics {
 	
 	public OrbitCharacteristics(double periapsis, double apsis, double inclination, double argumentOfPeriapsis,
 				double trueAnomaly,	double longitudeOfAscendingNode) {
-		position = null;
-		velocity = null;
+		//TODO
+		position = new Vec3(0, 7.331e6, 0);
+		velocity = new Vec3(Math.sqrt(UnderlyingModels.μE / 7.331e5), 0, 0);
 	}
 	
 	public OrbitCharacteristics(Vec3 position, Vec3 velocity) {

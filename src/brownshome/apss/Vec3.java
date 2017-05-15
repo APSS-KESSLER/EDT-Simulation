@@ -66,4 +66,9 @@ public final class Vec3 {
 	public Vec3 cross(Vec3 v) {
 		return new Vec3(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("[%.2f, %.2f, %.2f]", x, y, z);
+	}
 }

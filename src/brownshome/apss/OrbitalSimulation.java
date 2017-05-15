@@ -1,8 +1,10 @@
 package brownshome.apss;
 
+import java.time.Duration;
 import java.time.temporal.*;
 import java.util.function.UnaryOperator;
 
+import brownshome.apss.OrbitalSimulation.State;
 import javafx.application.Application;
 
 /**
@@ -12,10 +14,10 @@ import javafx.application.Application;
 public class OrbitalSimulation {
 	private static final double NANOS_PER_SECOND = 1e9;
 	
-	private final Satellite satelite;
-	private final long timeStep;
+	public final Satellite satelite;
 	
-	long currentTime;
+	private long timeStep;
+	private long currentTime;
 	
 	private class Derivative {
 		public final Vec3 dp;
@@ -49,13 +51,12 @@ public class OrbitalSimulation {
 			acceleration = gravity.scaleAdd(lorentzForce(), 1.0 / OrbitalSimulation.this.satelite.mass);
 		}
 
-		private Vec3 lorentzForce() {
-			return new Vec3();
+		public State(OrbitCharacteristics orbit) {
+			this(orbit.position, orbit.velocity);
 		}
 
-		private Vec3 gravitationalAcceleration() {
-			assert false : "not implemented";
-			return null;
+		private Vec3 lorentzForce() {
+			return new Vec3();
 		}
 
 		public State scaleAdd(Derivative dSdt, long nanos) {
@@ -73,6 +74,20 @@ public class OrbitalSimulation {
 		this.satelite = satellite;
 		this.timeStep = timeStep;
 		currentTime = 0;
+		
+		state = new State(startingOrbit);
+	}
+	
+	public long getCurrentTime() {
+		return currentTime;
+	}
+	
+	public long getTimeStep() {
+		return timeStep;
+	}
+	
+	public void setTimeStep(long timeStep) {
+		this.timeStep = timeStep;
 	}
 	
 	/**
@@ -82,19 +97,8 @@ public class OrbitalSimulation {
 		stepImpl(timeStep);
 	}
 	
-	/**
-	 * Step to a specified time from the start of the simulation
-	 */
-	public void stepTo(TemporalAmount amount) {
-		stepTo(amount.get(ChronoUnit.NANOS));
-	}
-	
-	public void stepTo(long nanos) {
-		step(nanos - currentTime);
-	}
-	
-	public void step(TemporalAmount amount) {
-		step(amount.get(ChronoUnit.NANOS));
+	public void step(Duration amount) {
+		step(amount.toNanos());
 	}
 	
 	public void step(long nanos) {
@@ -118,9 +122,14 @@ public class OrbitalSimulation {
 		
 		Derivative dSdt = new Derivative(a, b, c, d);
 		state = state.scaleAdd(dSdt, nanos);
+		currentTime += nanos;
 	}
 	
 	public static void main(String[] args) {
 		Application.launch(Display.class, args);
+	}
+
+	public State getState() {
+		return state;
 	}
 }
