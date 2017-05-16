@@ -2,17 +2,18 @@ package brownshome.apss;
 
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
-import java.util.function.Function;
 
-import javafx.animation.*;
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
-import javafx.event.EventHandler;
-import javafx.fxml.*;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.canvas.*;
-import javafx.scene.control.*;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
@@ -20,7 +21,7 @@ import javafx.stage.Stage;
 
 public class Display extends Application {
 	/** Satellite text fields */
-	@FXML private TextField periapsis, apsis, trueAnomaly, inclination, argumentOfPeriapsis,
+	@FXML private TextField eccentricity, semiMajorAxis, trueAnomaly, inclination, argumentOfPeriapsis,
 			longitudeOfAscendingNode, mass;
 	
 	@FXML private ChoiceBox<CableFunction> cableDirection;
@@ -70,7 +71,7 @@ public class Display extends Application {
 		if(simulation != null) {
 			OrbitalSimulation.State state = simulation.getState();
 			context.translate(canvas.getWidth() / 2, canvas.getHeight() / 2);
-			context.scale(5e-5, 5e-5);
+			context.scale(3e-5, -3e-5);
 			context.setFill(Color.LIGHTSKYBLUE);
 			context.fillOval(-UnderlyingModels.rE, -UnderlyingModels.rE, UnderlyingModels.rE * 2, UnderlyingModels.rE * 2);
 			context.setFill(Color.BLACK);
@@ -81,16 +82,16 @@ public class Display extends Application {
 
 	@FXML private void setOrbit() {
 		try {
-			double p, a, ta, i, aop, loan;
+			double e, a, v, ω, Ω, i;
 		
-			p = Double.parseDouble(periapsis.getText());
-			a = Double.parseDouble(apsis.getText());
-			ta = Double.parseDouble(trueAnomaly.getText());
+			e = Double.parseDouble(eccentricity.getText());
+			a = Double.parseDouble(semiMajorAxis.getText());
+			v = Double.parseDouble(trueAnomaly.getText());
 			i = Double.parseDouble(inclination.getText());
-			aop = Double.parseDouble(argumentOfPeriapsis.getText());
-			loan = Double.parseDouble(longitudeOfAscendingNode.getText());
+			ω = Double.parseDouble(argumentOfPeriapsis.getText());
+			Ω = Double.parseDouble(longitudeOfAscendingNode.getText());
 
-			OrbitCharacteristics orbit = new OrbitCharacteristics(p, a, ta, i, aop, loan);
+			OrbitCharacteristics orbit = new OrbitCharacteristics(e, a, i, ω, v, Ω);
 
 			double m = Double.parseDouble(mass.getText());
 			Satellite satellite = new Satellite(cableDirection.getValue(), m);
