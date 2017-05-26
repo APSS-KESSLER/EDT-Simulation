@@ -9,6 +9,9 @@ public class UnderlyingModels {
 	
 	static {
 		System.loadLibrary("brownshome_apss_UnderlyingModels");
+		if(!initializeWMMData()) {
+			throw new OutOfMemoryError();
+		}
 	}
 	
 	/**
@@ -20,7 +23,7 @@ public class UnderlyingModels {
 		double longitude = atan2(position.z, position.x);
 		double latitude = atan2(position.y, sqrt(position.x * position.x + position.z * position.z));
 		
-		return new Vec3(getWMMData(latitude / Math.PI * 180, longitude / Math.PI * 180, position.length(), 2017.5));
+		return getWMMData(latitude / Math.PI * 180, longitude / Math.PI * 180, position.length(), 2017.5);
 	}
 	
 	/**
@@ -29,10 +32,12 @@ public class UnderlyingModels {
 	 * @param longitude degrees
 	 * @param height m
 	 * @param time decimal year
-	 * @return A Vec3
+	 * @return A Vec3 representing the strength in (North, East Down)
 	 */
-	private static native double[] getWMMData(double latitude, double longitude, double height, double time);
+	private static native Vec3 getWMMData(double latitude, double longitude, double height, double time);
 
+	private static native boolean initializeWMMData();
+	
 	public static double getPlasmaDensity(Vec3 position) {
 		//assert false : "Not implemented";
 		return 0;

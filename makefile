@@ -13,4 +13,4 @@ bin/brownshome_apss_UnderlyingModels.h: bin/brownshome/apss/UnderlyingModels.cla
 	javah -d bin -classpath bin brownshome.apss.UnderlyingModels
 
 bin/brownshome/apss/UnderlyingModels.class:
-	javac src/brownshome/apss/UnderlyingModels.java -d bin
+	javac -encoding utf-8 src/java/brownshome/apss/UnderlyingModels.java -d bin -sourcepath src/java
