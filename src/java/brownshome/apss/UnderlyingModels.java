@@ -4,8 +4,18 @@ import static java.lang.Math.atan2;
 import static java.lang.Math.sqrt;
 
 public class UnderlyingModels {
+	/** Radius of the earth (m)*/
 	public static final double rE = 6.731e6;
+	/** Gm of the earth */
 	public static final double μE = 3.986004418e14;
+	
+	/** Charge of one electron (C)*/
+	public static final double e = -1.6021766208e-19;
+	/** mass of one electron (kg)*/
+	public static final double me = 9.10938356e-31;
+	
+	/** Conductivity of aluminium (S/m)*/
+	public static final double  σAluminium = 3.50e7;
 	
 	static {
 		System.loadLibrary("brownshome_apss_UnderlyingModels");
@@ -38,9 +48,9 @@ public class UnderlyingModels {
 
 	private static native boolean initializeWMMData();
 	
+	/** e per m3 */
 	public static double getPlasmaDensity(Vec3 position) {
-		//assert false : "Not implemented";
-		return 0;
+		return 3.16228e11;
 	}
 	
 	public static Vec3 getGravitationalAcceleration(Vec3 position) {

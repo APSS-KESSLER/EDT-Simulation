@@ -75,4 +75,8 @@ public final class Vec3 {
 	public String toString() {
 		return String.format("[%.3g, %.3g, %.3g]", x, y, z);
 	}
+
+	public double dot(Vec3 v) {
+		return x * v.x + y * v.y + z * v.z;
+	}
 }

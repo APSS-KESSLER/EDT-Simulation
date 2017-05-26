@@ -94,7 +94,7 @@ public class Display extends Application {
 			OrbitCharacteristics orbit = new OrbitCharacteristics(e, a, i, ω, v, Ω);
 
 			double m = Double.parseDouble(mass.getText());
-			Satellite satellite = new Satellite(cableDirection.getValue(), m);
+			Satellite satellite = new Satellite(cableDirection.getValue(), m, 0.01, UnderlyingModels.σAluminium);
 
 			simulation = new OrbitalSimulation(orbit, satellite, simulation == null ? getTimeStep() : simulation.getTimeStep());
 		} catch(NumberFormatException nfe) {

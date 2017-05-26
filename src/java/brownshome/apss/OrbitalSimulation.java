@@ -37,6 +37,7 @@ public class OrbitalSimulation {
 		public final Vec3 magneticField;
 		public final Vec3 acceleration;
 		public final Vec3 gravity;
+		public final Vec3 cableVector;
 		public final double plasmaDensity;
 		
 		public State(Vec3 position, Vec3 velocity) {
@@ -45,7 +46,8 @@ public class OrbitalSimulation {
 			magneticField = UnderlyingModels.getMagneticFieldStrength(position);
 			plasmaDensity = UnderlyingModels.getPlasmaDensity(position);
 			gravity = UnderlyingModels.getGravitationalAcceleration(position);
-			acceleration = gravity.scaleAdd(lorentzForce(), 1.0 / OrbitalSimulation.this.satelite.mass);
+			cableVector = OrbitalSimulation.this.satelite.cableVector.apply(this);
+			acceleration = gravity.scaleAdd(lorentzForce().add(dragForce()), 1.0 / OrbitalSimulation.this.satelite.mass);
 		}
 
 		public State(OrbitCharacteristics orbit) {
@@ -53,6 +55,41 @@ public class OrbitalSimulation {
 		}
 
 		private Vec3 lorentzForce() {
+			double cableLength = cableVector.length();
+			Vec3 cableUnitVector = cableVector.scale(cableLength);
+			
+			int iterations = 50;
+			
+			//Em = (B x v) . dl
+			double voltageGradient = velocity.cross(magneticField).dot(cableUnitVector);
+			
+			//Eq (3) 
+			double dIdlConstant = -UnderlyingModels.e * plasmaDensity * OrbitalSimulation.this.satelite.cableDiameter * 
+					Math.sqrt(2 * UnderlyingModels.e / UnderlyingModels.me);
+			
+			//Eq (4)
+			double dVdsConstant = 1.0 / (Math.PI * OrbitalSimulation.this.satelite.cableDiameter
+					* OrbitalSimulation.this.satelite.cableDiameter / 4 * OrbitalSimulation.this.satelite.cableConductivity);
+			
+			/** Current flowing towards the emmitter */
+			double current = 0;
+			
+			//voltage compared to the plasma environment. The voltage starts at -Em * length / 2
+			double voltage = voltageGradient * cableLength / 2;
+			
+			double currentLength = 0;
+			
+			double dl = cableLength / iterations;
+			for(int l = 0; l < cableLength; l += dl) {
+				voltage += (current * dVdsConstant - voltageGradient) * dl;
+				current += Math.sqrt(voltage) * dIdlConstant * dl;
+				currentLength += current * dl;
+			}
+			
+			return cableUnitVector.cross(magneticField).scale(cableLength);
+		}
+		
+		private Vec3 dragForce() {
 			return new Vec3();
 		}
 
