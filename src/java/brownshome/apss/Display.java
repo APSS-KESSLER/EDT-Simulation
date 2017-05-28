@@ -68,44 +68,51 @@ public class Display extends Application {
 			time.setText(Duration.ofNanos(simulation.getCurrentTime()).withNanos(0).toString());
 			
 			context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-			context.fillText("Magnetic Field: " + (int) (simulation.getState().magneticField.length() * 1e6) + "uT", 50, 50);
-			context.fillText("Force: " + (int) (simulation.getState().lorentzForce.length() * 1e9) + "nN", 50, 70);
-			context.fillText("Distance: " + (int) simulation.getState().position.length() + "m", 50, 90);
 			
 			OrbitalSimulation.State state = simulation.getState();
 			context.translate(canvas.getWidth() / 2, canvas.getHeight() / 2);
 			//context.strokeLine(0, 0, 100, 100);
 			
 			context.scale(3e-5, -3e-5);
-			context.setFill(Color.LIGHTSKYBLUE);
-			context.fillOval(-UnderlyingModels.rE, -UnderlyingModels.rE, UnderlyingModels.rE * 2, UnderlyingModels.rE * 2);
-			context.setFill(Color.BLACK);
-			context.fillOval(state.position.x - SAT_SIZE / 2, state.position.y - SAT_SIZE / 2, SAT_SIZE, SAT_SIZE);
+			
 			context.setStroke(Color.BLUE);
-			
-			context.setLineWidth(2e4);
-			
 			for(double x = -9e6; x < 9e6; x += 4e5) {
 				for(double y = -9e6; y < 9e6; y += 4e5) {
 					Vec3 v = new Vec3(x, y, state.position.z);
 					
-					if(v.lengthSquared() < UnderlyingModels.rE * UnderlyingModels.rE)
+					if(v.lengthSquared() < UnderlyingModels.rE * UnderlyingModels.rE * 0.5)
 						continue;
 					
 					OrbitalSimulation.State s = simulation.new State(v, state.velocity);
-					drawVector(s.magneticField.scale(3e9), s);
+					drawVector(s.magneticField.scale(6e9), s);
 				}
 			}
+			
+			context.setFill(Color.LIGHTSKYBLUE);
+			context.fillOval(-UnderlyingModels.rE, -UnderlyingModels.rE, UnderlyingModels.rE * 2, UnderlyingModels.rE * 2);
 			
 			context.setStroke(Color.RED);
 			drawVector(state.cableVector.withLength(1e6), state);
 			
+			context.setFill(Color.BLACK);
+			context.fillOval(state.position.x - SAT_SIZE / 2, state.position.y - SAT_SIZE / 2, SAT_SIZE, SAT_SIZE);
+			
+			context.setLineWidth(2e4);
+			
 			context.setTransform(new Affine());
+			
+			context.clearRect(0, 40, 180, 60);
+			context.fillText("Magnetic Field: " + (int) (simulation.getState().magneticField.length() * 1e6) + "uT", 50, 50);
+			context.fillText("Velocity: " + (int) (simulation.getState().velocity.length()) + "m/s", 50, 70);
+			context.fillText("Distance: " + (int) simulation.getState().position.length() + "m", 50, 90);
+			
+			
 		}
 	}
 	
 	private void drawVector(Vec3 v, OrbitalSimulation.State state) {
 		Vec3 end = state.position.add(v);
+		context.fillOval(state.position.x - 3e4, state.position.y - 3e4, 6e4, 6e4);
 		context.strokeLine(state.position.x, state.position.y, end.x, end.y);
 	}
 
