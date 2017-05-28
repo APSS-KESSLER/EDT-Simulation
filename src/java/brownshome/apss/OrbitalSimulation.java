@@ -38,6 +38,7 @@ public class OrbitalSimulation {
 		public final Vec3 acceleration;
 		public final Vec3 gravity;
 		public final Vec3 cableVector;
+		public final Vec3 lorentzForce;
 		public final double plasmaDensity;
 		
 		public State(Vec3 position, Vec3 velocity) {
@@ -47,7 +48,8 @@ public class OrbitalSimulation {
 			plasmaDensity = UnderlyingModels.getPlasmaDensity(position);
 			gravity = UnderlyingModels.getGravitationalAcceleration(position);
 			cableVector = OrbitalSimulation.this.satelite.cableVector.apply(this);
-			acceleration = gravity.scaleAdd(lorentzForce().add(dragForce()), 1.0 / OrbitalSimulation.this.satelite.mass);
+			lorentzForce = lorentzForce();
+			acceleration = gravity.scaleAdd(lorentzForce.add(dragForce()), 1.0 / OrbitalSimulation.this.satelite.mass);
 		}
 
 		public State(OrbitCharacteristics orbit) {
@@ -56,7 +58,7 @@ public class OrbitalSimulation {
 
 		private Vec3 lorentzForce() {
 			double cableLength = cableVector.length();
-			Vec3 cableUnitVector = cableVector.scale(cableLength);
+			Vec3 cableUnitVector = cableVector.scale(1/cableLength);
 			
 			int iterations = 50;
 			
@@ -65,7 +67,7 @@ public class OrbitalSimulation {
 			
 			//Eq (3) 
 			double dIdlConstant = -UnderlyingModels.e * plasmaDensity * OrbitalSimulation.this.satelite.cableDiameter * 
-					Math.sqrt(2 * UnderlyingModels.e / UnderlyingModels.me);
+					Math.sqrt(-2 * UnderlyingModels.e / UnderlyingModels.me);
 			
 			//Eq (4)
 			double dVdsConstant = 1.0 / (Math.PI * OrbitalSimulation.this.satelite.cableDiameter
@@ -80,13 +82,16 @@ public class OrbitalSimulation {
 			double currentLength = 0;
 			
 			double dl = cableLength / iterations;
-			for(int l = 0; l < cableLength; l += dl) {
+			for(double l = 0; l < cableLength; l += dl) {
 				voltage += (current * dVdsConstant - voltageGradient) * dl;
-				current += Math.sqrt(voltage) * dIdlConstant * dl;
+				
+				if(voltage < 0)
+					current += Math.sqrt(-voltage) * dIdlConstant * dl;
+				
 				currentLength += current * dl;
 			}
 			
-			return cableUnitVector.cross(magneticField).scale(cableLength);
+			return cableUnitVector.cross(magneticField).scale(currentLength);
 		}
 		
 		private Vec3 dragForce() {
@@ -102,7 +107,7 @@ public class OrbitalSimulation {
 	
 	/**
 	 * Takes a function that converts a position to a cable vector
-	 * @param cableVector The fucntion.
+	 * @param cableVector The function.
 	 */
 	public OrbitalSimulation(OrbitCharacteristics startingOrbit, Satellite satellite, long timeStep) {
 		this.satelite = satellite;

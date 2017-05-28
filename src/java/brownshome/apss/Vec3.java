@@ -79,4 +79,18 @@ public final class Vec3 {
 	public double dot(Vec3 v) {
 		return x * v.x + y * v.y + z * v.z;
 	}
+
+	public Vec3 rotateY(double angle) {
+		double s = Math.sin(angle);
+		double c = Math.cos(angle);
+		
+		return new Vec3(x * c - z * s, y, x * s + z * c);
+	}
+	
+	public Vec3 rotateX(double angle) {
+		double s = Math.sin(angle);
+		double c = Math.cos(angle);
+		
+		return new Vec3(x, y * c - z * s, z * c + y * s);
+	}
 }

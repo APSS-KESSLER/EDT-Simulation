@@ -49,6 +49,7 @@ public class Display extends Application {
 
 	private void setup() {
 		cableDirection.getItems().addAll(CableFunction.CABLE_FUNCTIONS);
+		cableDirection.getSelectionModel().select(0);
 		context = canvas.getGraphicsContext2D();
 		
 		new AnimationTimer() {
@@ -60,24 +61,52 @@ public class Display extends Application {
 		setOrbit();
 	}
 	
-	private static final double SAT_SIZE = 1e5;
+	private static final double SAT_SIZE = 2.5e5;
 	private void animationLoop() {
-		simulation.step(timePerFrame);
-		time.setText(Duration.ofNanos(simulation.getCurrentTime()).withNanos(0).toString());
-		
-		context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-		context.fillText("Megnetic Field: " + simulation.getState().magneticField, 50, 50);
-		
 		if(simulation != null) {
+			simulation.step(timePerFrame);
+			time.setText(Duration.ofNanos(simulation.getCurrentTime()).withNanos(0).toString());
+			
+			context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+			context.fillText("Magnetic Field: " + (int) (simulation.getState().magneticField.length() * 1e6) + "uT", 50, 50);
+			context.fillText("Force: " + (int) (simulation.getState().lorentzForce.length() * 1e9) + "nN", 50, 70);
+			context.fillText("Distance: " + (int) simulation.getState().position.length() + "m", 50, 90);
+			
 			OrbitalSimulation.State state = simulation.getState();
 			context.translate(canvas.getWidth() / 2, canvas.getHeight() / 2);
+			//context.strokeLine(0, 0, 100, 100);
+			
 			context.scale(3e-5, -3e-5);
 			context.setFill(Color.LIGHTSKYBLUE);
 			context.fillOval(-UnderlyingModels.rE, -UnderlyingModels.rE, UnderlyingModels.rE * 2, UnderlyingModels.rE * 2);
 			context.setFill(Color.BLACK);
 			context.fillOval(state.position.x - SAT_SIZE / 2, state.position.y - SAT_SIZE / 2, SAT_SIZE, SAT_SIZE);
+			context.setStroke(Color.BLUE);
+			
+			context.setLineWidth(2e4);
+			
+			for(double x = -9e6; x < 9e6; x += 4e5) {
+				for(double y = -9e6; y < 9e6; y += 4e5) {
+					Vec3 v = new Vec3(x, y, state.position.z);
+					
+					if(v.lengthSquared() < UnderlyingModels.rE * UnderlyingModels.rE)
+						continue;
+					
+					OrbitalSimulation.State s = simulation.new State(v, state.velocity);
+					drawVector(s.magneticField.scale(3e9), s);
+				}
+			}
+			
+			context.setStroke(Color.RED);
+			drawVector(state.cableVector.withLength(1e6), state);
+			
 			context.setTransform(new Affine());
 		}
+	}
+	
+	private void drawVector(Vec3 v, OrbitalSimulation.State state) {
+		Vec3 end = state.position.add(v);
+		context.strokeLine(state.position.x, state.position.y, end.x, end.y);
 	}
 
 	@FXML private void setOrbit() {

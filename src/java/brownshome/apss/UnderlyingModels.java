@@ -5,7 +5,7 @@ import static java.lang.Math.sqrt;
 
 public class UnderlyingModels {
 	/** Radius of the earth (m)*/
-	public static final double rE = 6.731e6;
+	public static final double rE = 6.371e6;
 	/** Gm of the earth */
 	public static final double μE = 3.986004418e14;
 	
@@ -30,12 +30,23 @@ public class UnderlyingModels {
 	 * @return The vector of the magnetic field in R3
 	 */
 	public static Vec3 getMagneticFieldStrength(Vec3 position) {
-		double longitude = atan2(position.z, position.x);
+		double longitude = atan2(position.x, -position.z);
 		double latitude = atan2(position.y, sqrt(position.x * position.x + position.z * position.z));
 		
-		return getWMMData(latitude / Math.PI * 180, longitude / Math.PI * 180, position.length(), 2017.5);
+		Vec3 NED = getWMMData(latitude / Math.PI * 180, longitude / Math.PI * 180, position.length(), 2017.5).scale(1e-9);
+		
+		//y is up, x is right, z is forward. 0-longitude is (0, 0, -rE)
+		return translateNED(new Vec3(NED.y, NED.x, NED.z), latitude, longitude);
 	}
 	
+	private static Vec3 translateNED(Vec3 ned, double latitude, double longitude) {
+		//rotate up by longitude
+		//rotate by latitude
+		
+		ned = ned.rotateX(latitude);
+		return ned.rotateY(longitude);
+	}
+
 	/**
 	 * 
 	 * @param latitude degrees
