@@ -83,8 +83,8 @@ public class Display extends Application {
 					if(v.lengthSquared() < UnderlyingModels.rE * UnderlyingModels.rE * 0.5)
 						continue;
 					
-					OrbitalSimulation.State s = simulation.new State(v, state.velocity);
-					drawVector(s.magneticField.scale(6e9), s);
+					Vec3 s = UnderlyingModels.getMagneticFieldStrength(v);
+					drawVector(s.scale(6e9), v);
 				}
 			}
 			
@@ -92,7 +92,7 @@ public class Display extends Application {
 			context.fillOval(-UnderlyingModels.rE, -UnderlyingModels.rE, UnderlyingModels.rE * 2, UnderlyingModels.rE * 2);
 			
 			context.setStroke(Color.RED);
-			drawVector(state.cableVector.withLength(1e6), state);
+			drawVector(state.cableVector.withLength(1e6), state.position);
 			
 			context.setFill(Color.BLACK);
 			context.fillOval(state.position.x - SAT_SIZE / 2, state.position.y - SAT_SIZE / 2, SAT_SIZE, SAT_SIZE);
@@ -110,10 +110,10 @@ public class Display extends Application {
 		}
 	}
 	
-	private void drawVector(Vec3 v, OrbitalSimulation.State state) {
-		Vec3 end = state.position.add(v);
-		context.fillOval(state.position.x - 3e4, state.position.y - 3e4, 6e4, 6e4);
-		context.strokeLine(state.position.x, state.position.y, end.x, end.y);
+	private void drawVector(Vec3 v, Vec3 p) {
+		Vec3 end = p.add(v);
+		context.fillOval(p.x - 3e4, p.y - 3e4, 6e4, 6e4);
+		context.strokeLine(p.x, p.y, end.x, end.y);
 	}
 
 	@FXML private void setOrbit() {

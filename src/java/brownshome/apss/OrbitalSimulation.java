@@ -1,6 +1,9 @@
 package brownshome.apss;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.function.DoubleSupplier;
+import java.util.function.DoubleUnaryOperator;
 
 import javafx.application.Application;
 
@@ -106,25 +109,48 @@ public class OrbitalSimulation {
 			}
 			
 			double targetEndVoltage = voltageGradient * cableLength;
-			double low = targetEndVoltage - 10 * cableLength - 100;
-			double high = targetEndVoltage + 10 * cableLength + 100;
+			double low = 0;
+			double high = targetEndVoltage;
+			double endVoltage;
 			
 			Result r;
+			int i = 0;
+			
+			/*double[] v = new double[20];
+			for(int j = 0; j < 20; j++) {
+				r = new Result(targetEndVoltage / 20 * j, 100);
+				v[j] = emitterVoltageDrop(r.endCurrent) + r.endVoltage;
+			}
+			
+			System.out.println(Arrays.toString(v));*/
+			
+			r = new Result(low, 1000);
+			endVoltage = emitterVoltageDrop(r.endCurrent) + r.endVoltage;
+			if(endVoltage > targetEndVoltage) {
+				current = 0;
+				return new Vec3();
+			}
+			
 			do {
-				int iterations = 10;
+				i++;
+				int iterations = 100;
 				if(high - low < 10) {
-					iterations = 100;
+					iterations = 1000;
 				}
 				
 				double mid = low / 2 + high / 2;
 				r = new Result(mid, iterations);
-				double endVoltage = emitterVoltageDrop(r.endCurrent) + r.endVoltage;
+				endVoltage = emitterVoltageDrop(r.endCurrent) + r.endVoltage;
 				if(endVoltage < targetEndVoltage) {
 					low = mid;
 				} else {
 					high = mid;
 				}
-			} while(high - low > 1e-3);
+			} while(Math.abs(low - high) / targetEndVoltage > 1e-4 && i < 1000);
+			
+			if(i == 1000) {
+				System.out.println("Failed to converge");
+			}
 			
 			current = r.endCurrent;
 			return cableUnitVector.cross(magneticField).scale(r.currentLength);
@@ -132,9 +158,6 @@ public class OrbitalSimulation {
 		
 		private double emitterVoltageDrop(double endCurrent) {
 			//https://ieeexplore-ieee-org.ezproxy.auckland.ac.nz/stamp/stamp.jsp?tp=&arnumber=4480910
-			
-			if(current == 0)
-				return 0.0;
 			
 			return 35; //Crappy estimate, but gets the job done
 		}
