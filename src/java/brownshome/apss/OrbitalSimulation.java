@@ -40,6 +40,7 @@ public class OrbitalSimulation {
 		public final Vec3 cableVector;
 		public final Vec3 lorentzForce;
 		public final double plasmaDensity;
+		public double current;
 		
 		public State(Vec3 position, Vec3 velocity) {
 			this.position = position;
@@ -56,44 +57,88 @@ public class OrbitalSimulation {
 			this(orbit.position, orbit.velocity);
 		}
 
-		private Vec3 lorentzForce() {
+		private Vec3 lorentzForce() {			
 			double cableLength = cableVector.length();
-			Vec3 cableUnitVector = cableVector.scale(1/cableLength);
-			
-			int iterations = 50;
+			Vec3 cableUnitVector = cableVector.scale(1 / cableLength);
 			
 			//Em = (B x v) . dl
 			double voltageGradient = velocity.cross(magneticField).dot(cableUnitVector);
+			
+			if(voltageGradient < 0)
+				return new Vec3();
 			
 			//Eq (3) 
 			double dIdlConstant = -UnderlyingModels.e * plasmaDensity * OrbitalSimulation.this.satelite.cableDiameter * 
 					Math.sqrt(-2 * UnderlyingModels.e / UnderlyingModels.me);
 			
 			//Eq (4)
-			double dVdsConstant = 1.0 / (Math.PI * OrbitalSimulation.this.satelite.cableDiameter
+			double resistivity = 1.0 / (Math.PI * OrbitalSimulation.this.satelite.cableDiameter
 					* OrbitalSimulation.this.satelite.cableDiameter / 4 * OrbitalSimulation.this.satelite.cableConductivity);
 			
-			/** Current flowing towards the emmitter */
-			double current = 0;
+			//Keep iterating with different starting voltages to find the voltage where Vc + RI + Ve = Vemf * l, this should be findable with a binary search.
 			
-			//voltage compared to the plasma environment. The voltage starts at -Em * length / 2
-			double voltage = voltageGradient * cableLength / 2;
+			class Result {
+				double currentLength = 0;
+				double endCurrent;
+				double endVoltage;
 			
-			double currentLength = 0;
-			
-			double dl = cableLength / iterations;
-			for(double l = 0; l < cableLength; l += dl) {
-				voltage += (current * dVdsConstant - voltageGradient) * dl;
-				
-				if(voltage < 0)
-					current += Math.sqrt(-voltage) * dIdlConstant * dl;
-				
-				currentLength += current * dl;
+				Result(double startingVoltage, int iterations) {
+					double current = 0;
+					double voltage = startingVoltage;
+					double dl = cableLength / iterations;
+					
+					//Euler integration of the system
+					for(int i = 0; i < iterations; i++) {
+						double deltaV = voltage - dl * i * voltageGradient;
+						
+						voltage += current * resistivity * dl;
+						
+						if(deltaV > 0) {
+							current += Math.sqrt(deltaV) * dIdlConstant * dl;
+						}
+						
+						currentLength += current * dl;
+					}
+					
+					endCurrent = current;
+					endVoltage = voltage;
+				}
 			}
 			
-			return cableUnitVector.cross(magneticField).scale(currentLength);
+			double targetEndVoltage = voltageGradient * cableLength;
+			double low = targetEndVoltage - 10 * cableLength - 100;
+			double high = targetEndVoltage + 10 * cableLength + 100;
+			
+			Result r;
+			do {
+				int iterations = 10;
+				if(high - low < 10) {
+					iterations = 100;
+				}
+				
+				double mid = low / 2 + high / 2;
+				r = new Result(mid, iterations);
+				double endVoltage = emitterVoltageDrop(r.endCurrent) + r.endVoltage;
+				if(endVoltage < targetEndVoltage) {
+					low = mid;
+				} else {
+					high = mid;
+				}
+			} while(high - low > 1e-3);
+			
+			current = r.endCurrent;
+			return cableUnitVector.cross(magneticField).scale(r.currentLength);
 		}
 		
+		private double emitterVoltageDrop(double endCurrent) {
+			//https://ieeexplore-ieee-org.ezproxy.auckland.ac.nz/stamp/stamp.jsp?tp=&arnumber=4480910
+			
+			if(current == 0)
+				return 0.0;
+			
+			return 35; //Crappy estimate, but gets the job done
+		}
+
 		private Vec3 dragForce() {
 			return new Vec3();
 		}

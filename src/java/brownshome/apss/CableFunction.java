@@ -17,21 +17,29 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 				new CableFunction("Towards gravity - 50m") {
 					@Override
 					public Vec3 apply(State state) {
-						return state.gravity.withLength(50.0);
+						return state.gravity.withLength(50);
 					}
 				},
 				
-				new CableFunction("Across velocity - 50m") {
-					@Override
-					public Vec3 apply(State state) {
-						return state.position.cross(state.velocity).withLength(5.0);
-					};
-				}
-				));
+				acrossVelocity(25),
+				acrossVelocity(50),
+				acrossVelocity(100),
+				acrossVelocity(200),
+				acrossVelocity(500),
+				acrossVelocity(1000)));
 	}
 	
 	private CableFunction(String name) {
 		this.name = name;
+	}
+	
+	static CableFunction acrossVelocity(double distance) {
+		return new CableFunction("Across velocity - " + distance + "m") {
+			@Override
+			public Vec3 apply(State state) {
+				return state.position.cross(state.velocity).withLength(distance);
+			}
+		};
 	}
 	
 	@Override
