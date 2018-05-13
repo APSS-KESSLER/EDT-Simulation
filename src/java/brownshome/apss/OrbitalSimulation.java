@@ -124,7 +124,7 @@ public class OrbitalSimulation {
 			
 			System.out.println(Arrays.toString(v));*/
 			
-			r = new Result(low, 1000);
+			r = new Result(low, 10);
 			endVoltage = emitterVoltageDrop(r.endCurrent) + r.endVoltage;
 			if(endVoltage > targetEndVoltage) {
 				current = 0;
@@ -133,9 +133,9 @@ public class OrbitalSimulation {
 			
 			do {
 				i++;
-				int iterations = 100;
+				int iterations = 10;
 				if(high - low < 10) {
-					iterations = 1000;
+					iterations = 100;
 				}
 				
 				double mid = low / 2 + high / 2;
