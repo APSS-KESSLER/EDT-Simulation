@@ -18,7 +18,7 @@ public class UnderlyingModels {
 	public static final double  σAluminium = 3.50e7;
 	
 	static {
-		System.loadLibrary("brownshome_apss_UnderlyingModels");
+		System.loadLibrary("library");
 		if(!initializeWMMData()) {
 			throw new OutOfMemoryError();
 		}

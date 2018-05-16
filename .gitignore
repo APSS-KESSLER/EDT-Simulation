@@ -2,5 +2,7 @@
 /resources/
 .classpath
 .project
+/.gradle/
+/build/
 /.settings/
 *.cproject

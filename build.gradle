@@ -1,0 +1,64 @@
+plugins {
+	id 'c'
+	id 'application'
+}
+
+sourceSets {
+	main {
+		java.srcDirs = ['src/java']
+		resources.srcDirs = ['src/java']
+	}
+}
+
+mainClassName = 'brownshome.apss.Display'
+
+jar {
+	manifest {
+		attributes('Main-Class': mainClassName)
+	}
+}
+
+model {
+	platforms {
+	    x64 {
+            architecture 'x64'
+        }
+    }
+	repositories {
+		libs(PrebuiltLibraries) {
+			jni {
+				headers.srcDirs "${System.properties.'java.home'}/include", "${System.properties.'java.home'}/include/win32", "${System.properties.'java.home'}/include/linux"
+			}
+		}
+	}
+	
+	components {
+		library(NativeLibrarySpec) {
+			targetPlatform 'x64'
+		
+			binaries.all {
+				if (toolChain in Gcc) {
+					cppCompiler.args '-std=c11'
+					linker.args '-fPIC'
+				}
+			}
+		
+			sources {
+				c {
+					lib library: 'jni', linkage: 'api'
+				}
+			}
+		}
+	}
+}
+
+//The native tasks are added very late in the process, much irritation
+tasks.whenTaskAdded { t ->
+	if(t.name.equals('linkLibrarySharedLibrary')) {
+		run { 
+			systemProperty 'java.library.path', t.binaryFile.asFile.get().parent
+			dependsOn t
+		}
+	}
+}
+
