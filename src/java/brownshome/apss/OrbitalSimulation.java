@@ -109,20 +109,12 @@ public class OrbitalSimulation {
 			}
 			
 			double targetEndVoltage = voltageGradient * cableLength;
-			double low = 0;
-			double high = targetEndVoltage;
+			double low = -1000;
+			double high = targetEndVoltage + 1000;
 			double endVoltage;
 			
 			Result r;
 			int i = 0;
-			
-			/*double[] v = new double[20];
-			for(int j = 0; j < 20; j++) {
-				r = new Result(targetEndVoltage / 20 * j, 100);
-				v[j] = emitterVoltageDrop(r.endCurrent) + r.endVoltage;
-			}
-			
-			System.out.println(Arrays.toString(v));*/
 			
 			r = new Result(low, 10);
 			endVoltage = emitterVoltageDrop(r.endCurrent) + r.endVoltage;
