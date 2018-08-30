@@ -57,7 +57,7 @@ model {
 tasks.whenTaskAdded { t ->
 	if(t.name.equals('linkLibrarySharedLibrary')) {
 		run { 
-			systemProperty 'java.library.path', t.binaryFile.asFile.get().parent
+			systemProperty 'java.library.path', "$buildDir/libs/library/shared"
 			dependsOn t
 		}
 	}

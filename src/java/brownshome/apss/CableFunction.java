@@ -14,13 +14,11 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 
 	static {
 		CABLE_FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
-				new CableFunction("Towards gravity - 50m") {
-					@Override
-					public Vec3 apply(State state) {
-						return state.gravity.withLength(50);
-					}
-				},
-				
+				towardsGravity(25),
+				towardsGravity(50),
+				towardsGravity(100),
+				towardsGravity(200),
+
 				acrossVelocity(25),
 				acrossVelocity(50),
 				acrossVelocity(100),
@@ -33,6 +31,15 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 		this.name = name;
 	}
 	
+	static CableFunction towardsGravity(double distance) {
+		return new CableFunction("Towards gravity - " + distance + "m") {
+			@Override
+			public Vec3 apply(State state) {
+				return state.gravity.withLength(distance);
+			}
+		};
+	}
+
 	static CableFunction acrossVelocity(double distance) {
 		return new CableFunction("Across velocity - " + distance + "m") {
 			@Override
