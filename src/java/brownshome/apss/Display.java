@@ -101,12 +101,15 @@ public class Display extends Application {
 			
 			context.setTransform(new Affine());
 			
-			context.clearRect(0, 40, 180, 100);
+			context.clearRect(0, 40, 180, 120);
 			context.fillText("Magnetic Field: " + (int) (simulation.getState().magneticField.length() * 1e6) + "uT", 50, 50);
 			context.fillText("Velocity: " + (int) (simulation.getState().velocity.length()) + "m/s", 50, 70);
 			context.fillText("Distance: " + (int) simulation.getState().position.length() + "m", 50, 90);
-			context.fillText("Lorentz Force: " + String.format("%.3f", simulation.getState().lorentzForce.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uN", 50, 110);
-			context.fillText("Current: " + String.format("%.3fmA", simulation.getState().current * 1e3), 50, 130);
+			context.fillText("Lorentz Force: " + String.format("%.3f", simulation.getState().
+					lorentzForce.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uN", 50, 110);
+			context.fillText("Lorentz Torque: " + String.format("%.3f", simulation.getState().
+					lorentzTorque.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uNm", 50, 130);
+			context.fillText("Current: " + String.format("%.3fmA", simulation.getState().current * 1e3), 50, 150);
 		}
 	}
 	
@@ -130,7 +133,8 @@ public class Display extends Application {
 			OrbitCharacteristics orbit = new OrbitCharacteristics(e, a, i, ω, v, Ω);
 
 			double m = Double.parseDouble(mass.getText());
-			Satellite satellite = new Satellite(cableDirection.getValue(), m, 1e-3, UnderlyingModels.σAluminium);
+			Satellite satellite = new Satellite(cableDirection.getValue(), 1e-2, m, 1e-3,
+					UnderlyingModels.σAluminium);
 
 			simulation = new OrbitalSimulation(orbit, satellite, simulation == null ? getTimeStep() : simulation.getTimeStep());
 		} catch(NumberFormatException nfe) {
