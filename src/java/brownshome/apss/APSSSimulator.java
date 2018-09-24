@@ -64,9 +64,10 @@ public class APSSSimulator {
 				throw new ParseException("No function found: " + CableFunction.CABLE_FUNCTIONS.toString());
 			}
 			
-			Satellite sat = new Satellite(chosenFunction, mass, cableDiameter, conductivity);
+			Satellite sat = new Satellite(chosenFunction, 0, mass, cableDiameter, conductivity);
 			
-			List<State> states = runHeadlessSimulation(sat, new OrbitCharacteristics(0.0, height, inclination, 0.0, 0.0, 0.0), Duration.ofHours(6));
+			List<State> states = runHeadlessSimulation(sat, new OrbitCharacteristics(0.0, height, inclination, 0.0, 0.0, 0.0), Duration.ofHours(6), Duration.ofMinutes(1),
+					Duration.ofMillis(50));
 			
 			try(BufferedWriter writer = Files.newBufferedWriter(Paths.get("output.csv"), 
 					StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
@@ -87,18 +88,26 @@ public class APSSSimulator {
 		}
 	}
 
-	public static List<State> runHeadlessSimulation(Satellite satellite, OrbitCharacteristics c, Duration length) {
-		OrbitalSimulation simulation = new OrbitalSimulation(c, satellite, Duration.ofMillis(50).toNanos());
+	public static List<State> runHeadlessSimulation(Satellite satellite, OrbitCharacteristics c, Duration length, Duration sampleFrequency, Duration simFrequency) {
+		OrbitalSimulation simulation = new OrbitalSimulation(c, satellite, simFrequency.toNanos());
 		
 		List<State> states = new ArrayList<>();
-		long variation = Duration.ofMinutes(1).toNanos();
-		int seconds = 0;
+		
+		long sampleNanos = sampleFrequency.toNanos();
+		int lastSample = 0;
+		
+		long printFrequency = Duration.ofMinutes(30).toNanos();
+		int lastPrint = 0;
 		
 		while(true) {
-			if(seconds < simulation.getState().time / variation) {
-				seconds = (int) (simulation.getState().time / variation);
-				System.out.println("Simulated: " + Duration.ofNanos(simulation.getState().time));
+			if(lastSample < simulation.getState().time / sampleNanos) {
+				lastSample = (int) (simulation.getState().time / sampleNanos);
 				states.add(simulation.getState());
+			}
+			
+			if(lastPrint < simulation.getState().time / printFrequency) {
+				lastPrint = (int) (simulation.getState().time / printFrequency);
+				System.out.println("Simulated: " + Duration.ofNanos(simulation.getState().time));
 			}
 			
 			if(simulation.getState().time > length.toNanos()) {

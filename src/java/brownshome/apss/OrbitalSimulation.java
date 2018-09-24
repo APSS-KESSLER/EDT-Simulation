@@ -150,7 +150,7 @@ public class OrbitalSimulation {
 		private double emitterVoltageDrop(double endCurrent) {
 			//https://ieeexplore-ieee-org.ezproxy.auckland.ac.nz/stamp/stamp.jsp?tp=&arnumber=4480910
 			
-			return 35; //Crappy estimate, but gets the job done
+			return 35 - OrbitalSimulation.this.satelite.bias; //Crappy estimate, but gets the job done
 		}
 
 		private Vec3 dragForce() {
