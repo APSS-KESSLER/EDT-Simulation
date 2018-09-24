@@ -130,7 +130,7 @@ public class Display extends Application {
 			OrbitCharacteristics orbit = new OrbitCharacteristics(e, a, i, ω, v, Ω);
 
 			double m = Double.parseDouble(mass.getText());
-			Satellite satellite = new Satellite(cableDirection.getValue(), m, 1e-3, UnderlyingModels.σAluminium);
+			Satellite satellite = new Satellite(cableDirection.getValue(), 35, m, 1e-3, UnderlyingModels.σAluminium);
 
 			simulation = new OrbitalSimulation(orbit, satellite, simulation == null ? getTimeStep() : simulation.getTimeStep());
 		} catch(NumberFormatException nfe) {

@@ -1,9 +1,6 @@
 package brownshome.apss;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.function.DoubleSupplier;
-import java.util.function.DoubleUnaryOperator;
 
 import javafx.application.Application;
 
@@ -44,9 +41,11 @@ public class OrbitalSimulation {
 		public final Vec3 lorentzForce;
 		public final double plasmaDensity;
 		public double current;
+		public final long time;
 		
-		public State(Vec3 position, Vec3 velocity) {
+		public State(Vec3 position, Vec3 velocity, long time) {
 			this.position = position;
+			this.time = time;
 			this.velocity = velocity;
 			magneticField = UnderlyingModels.getMagneticFieldStrength(position);
 			plasmaDensity = UnderlyingModels.getPlasmaDensity(position);
@@ -56,8 +55,8 @@ public class OrbitalSimulation {
 			acceleration = gravity.scaleAdd(lorentzForce.add(dragForce()), 1.0 / OrbitalSimulation.this.satelite.mass);
 		}
 
-		public State(OrbitCharacteristics orbit) {
-			this(orbit.position, orbit.velocity);
+		public State(OrbitCharacteristics orbit, long time) {
+			this(orbit.position, orbit.velocity, time);
 		}
 
 		private Vec3 lorentzForce() {			
@@ -151,7 +150,7 @@ public class OrbitalSimulation {
 		private double emitterVoltageDrop(double endCurrent) {
 			//https://ieeexplore-ieee-org.ezproxy.auckland.ac.nz/stamp/stamp.jsp?tp=&arnumber=4480910
 			
-			return 35; //Crappy estimate, but gets the job done
+			return 35 - OrbitalSimulation.this.satelite.bias; //Crappy estimate, but gets the job done
 		}
 
 		private Vec3 dragForce() {
@@ -159,7 +158,7 @@ public class OrbitalSimulation {
 		}
 
 		public State scaleAdd(Derivative dSdt, long nanos) {
-			return new State(position.scaleAdd(dSdt.dp, nanos / NANOS_PER_SECOND), velocity.scaleAdd(dSdt.dv, nanos / NANOS_PER_SECOND));
+			return new State(position.scaleAdd(dSdt.dp, nanos / NANOS_PER_SECOND), velocity.scaleAdd(dSdt.dv, nanos / NANOS_PER_SECOND), currentTime);
 		}
 	}
 	
@@ -174,7 +173,7 @@ public class OrbitalSimulation {
 		this.timeStep = timeStep;
 		currentTime = 0;
 		
-		state = new State(startingOrbit);
+		state = new State(startingOrbit, timeStep);
 	}
 	
 	public long getCurrentTime() {
