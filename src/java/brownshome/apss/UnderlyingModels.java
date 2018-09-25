@@ -16,6 +16,8 @@ public class UnderlyingModels {
 	
 	/** Conductivity of aluminium (S/m)*/
 	public static final double  σAluminium = 3.50e7;
+
+	private static final double plasmaDensity = 3.16228e11;
 	
 	static {
 		System.loadLibrary("library");
@@ -61,10 +63,14 @@ public class UnderlyingModels {
 	
 	/** e per m3 */
 	public static double getPlasmaDensity(Vec3 position) {
-		return 3.16228e11;
+		return plasmaDensity;
 	}
 	
 	public static Vec3 getGravitationalAcceleration(Vec3 position) {
 		return position.withLength(-μE / position.lengthSquared());
 	}
+
+	public static double getAtmosphericDensity(Vec3 position) {
+	    return 1.93e-11; // TODO better value
+    }
 }

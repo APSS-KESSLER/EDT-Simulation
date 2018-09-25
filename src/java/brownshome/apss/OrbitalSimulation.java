@@ -45,8 +45,10 @@ public class OrbitalSimulation {
 		public Vec3 lorentzTorque;
 		public Vec3 dragForce;
 		public Vec3 dragTorque;
+		public Vec3 netTorque;
 		public final Vec3 gravityGradientTorque;
 		public final double plasmaDensity;
+        public final double atmosphericDensity;
 		public double current;
 		
 		public State(Vec3 position, Vec3 velocity) {
@@ -54,6 +56,7 @@ public class OrbitalSimulation {
 			this.velocity = velocity;
 			magneticField = UnderlyingModels.getMagneticFieldStrength(position);
 			plasmaDensity = UnderlyingModels.getPlasmaDensity(position);
+            atmosphericDensity = UnderlyingModels.getAtmosphericDensity(position);
 			gravity = UnderlyingModels.getGravitationalAcceleration(position);
 			cableVector = OrbitalSimulation.this.satelite.cableVector.apply(this);
 			lorentzForce = new Vec3();
@@ -62,6 +65,7 @@ public class OrbitalSimulation {
 			dragForce = new Vec3();
 			dragTorque = new Vec3();
 			dragCalculation();
+			netTorque = dragTorque.add(lorentzTorque);
 			gravityGradientTorque = gravityGradientTorque();
 			acceleration = gravity.scaleAdd(lorentzForce.add(dragForce), 1.0 / OrbitalSimulation.this.satelite.mass);
 		}
@@ -72,6 +76,8 @@ public class OrbitalSimulation {
 
 		private void lorentzCalculation() {
 			double cableLength = cableVector.length();
+            //double cableLength = OrbitalSimulation.this.satelite.cableVector.cableLength;
+			//System.out.println(cableLength);
 			Vec3 cableUnitVector = cableVector.scale(1 / cableLength);
 			
 			//Em = (B x v) . dl
@@ -157,7 +163,9 @@ public class OrbitalSimulation {
 			
 			if(i == 1000) {
 				System.out.println("Failed to converge");
-			}
+			} else {
+			    //System.out.println("Converged");
+            }
 			
 			current = r.endCurrent;
 			lorentzForce = cableUnitVector.cross(magneticField).scale(r.currentLength);
@@ -188,10 +196,10 @@ public class OrbitalSimulation {
 		    Vec3 scaledVelocity = velocity.scale(velocityScalar);
 		    double effectiveAreaRatio = cableVector.add(scaledVelocity).length();
 
-            double fCubeSat = -0.5 * plasmaDensity * satelite.cubeSatDragCoefficient * velocity.lengthSquared()
+            double fCubeSat = -0.5 * atmosphericDensity * satelite.cubeSatDragCoefficient * velocity.lengthSquared()
                     * Math.pow(satelite.cubeSatDimension, 2);
 
-            double fTether = -0.5 * plasmaDensity * satelite.tetherDragCoefficient *
+            double fTether = -0.5 * atmosphericDensity * satelite.tetherDragCoefficient *
                     Math.pow(velocity.length(),2)*effectiveAreaRatio*satelite.cableDiameter;
             double fTether1 = ((satelite.cableVector.cableLength-satelite.centreOfMass)/
                     satelite.cableVector.cableLength)*fTether;
@@ -200,6 +208,7 @@ public class OrbitalSimulation {
             dragForce = velocity.withLength(fCubeSat + fTether);
             dragTorque = cableVector.withLength(1).cross(velocity.withLength(1))
                     .scale(rCubeSat*fCubeSat + rTether1*fTether1 + rTether2*fTether2);
+            System.out.println(dragTorque.length());
 		}
 
 		public State scaleAdd(Derivative dSdt, long nanos) {

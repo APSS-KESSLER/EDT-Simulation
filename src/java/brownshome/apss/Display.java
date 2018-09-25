@@ -110,6 +110,12 @@ public class Display extends Application {
 			context.fillText("Lorentz Torque: " + String.format("%.3f", simulation.getState().
 					lorentzTorque.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uNm", 50, 130);
 			context.fillText("Current: " + String.format("%.3fmA", simulation.getState().current * 1e3), 50, 150);
+			context.fillText("Drag Force: " + String.format("%.3f", simulation.getState().
+					dragForce.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uN", 50, 170);
+			context.fillText("Drag Torque: " + String.format("%.3f", simulation.getState().
+					dragTorque.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uNm", 50, 190);
+			context.fillText("Net Torque: " + String.format("%.3f", simulation.getState().
+					netTorque.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uNm", 50, 210);
 		}
 	}
 	
