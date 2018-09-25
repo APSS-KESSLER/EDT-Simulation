@@ -41,10 +41,11 @@ public class OrbitalSimulation {
 		public final Vec3 acceleration;
 		public final Vec3 gravity;
 		public final Vec3 cableVector;
-        public final double centreOfMass;
 		public Vec3 lorentzForce;
 		public Vec3 lorentzTorque;
-		public Vec3 gravityGradientTorque;
+		public Vec3 dragForce;
+		public Vec3 dragTorque;
+		public final Vec3 gravityGradientTorque;
 		public final double plasmaDensity;
 		public double current;
 		
@@ -55,12 +56,14 @@ public class OrbitalSimulation {
 			plasmaDensity = UnderlyingModels.getPlasmaDensity(position);
 			gravity = UnderlyingModels.getGravitationalAcceleration(position);
 			cableVector = OrbitalSimulation.this.satelite.cableVector.apply(this);
-			centreOfMass = centreOfMass();
 			lorentzForce = new Vec3();
 			lorentzTorque = new Vec3();
+            lorentzCalculation(); // calculate Lorentz force and torque
+			dragForce = new Vec3();
+			dragTorque = new Vec3();
+			dragCalculation();
 			gravityGradientTorque = gravityGradientTorque();
-			lorentzCalculation(); // calculate Lorentz force and torque
-			acceleration = gravity.scaleAdd(lorentzForce.add(dragForce()), 1.0 / OrbitalSimulation.this.satelite.mass);
+			acceleration = gravity.scaleAdd(lorentzForce.add(dragForce), 1.0 / OrbitalSimulation.this.satelite.mass);
 		}
 
 		public State(OrbitCharacteristics orbit) {
@@ -112,7 +115,7 @@ public class OrbitalSimulation {
 						double changeInCurrentLength = current * dl;
 
 						currentLength += changeInCurrentLength;
-						currentLengthRadius += changeInCurrentLength * (radius - centreOfMass);
+						currentLengthRadius += changeInCurrentLength * (satelite.centreOfMass - radius);
 					}
 					
 					endCurrent = current;
@@ -158,27 +161,10 @@ public class OrbitalSimulation {
 			
 			current = r.endCurrent;
 			lorentzForce = cableUnitVector.cross(magneticField).scale(r.currentLength);
-			lorentzTorque = cableUnitVector.cross(magneticField).scale(r.currentLengthRadius);
+			lorentzTorque = cableUnitVector.cross(cableUnitVector.cross(magneticField)).scale(r.currentLengthRadius);
 		}
 
-        /**
-         * Finds the centre of mass of the system along the axis of the length of the tether.
-         * The centre of mass is relative to the unattached end of the tether
-         * @return the centre of mass in metres
-         */
-		private double centreOfMass() {
 
-		    // Need to calculate density; 2830 is standard density of aluminium
-		    double cableMass = 2830 * Math.PI*Math.pow(satelite.cableDiameter/2, 2) * cableVector.length();
-
-			// Take the end of the tether
-            double cubeSatCentreOfMass = cableVector.length() + satelite.cubeSatDimension/2;
-            double tetherCentreOfMass = cableVector.length()/2;
-
-			double centreOfMass = (satelite.mass * cubeSatCentreOfMass + cableMass * tetherCentreOfMass)/
-                    (satelite.mass + cableMass);
-			return centreOfMass;
-        }
 
         private Vec3 gravityGradientTorque() {
             return new Vec3(); // needs to be calculated
@@ -190,8 +176,30 @@ public class OrbitalSimulation {
 			return 35; //Crappy estimate, but gets the job done
 		}
 
-		private Vec3 dragForce() {
-			return new Vec3(); // needs to be calculated
+        /**
+         * Finds the drag force and torque acting on the tether due to the drag force.
+         */
+		private void dragCalculation() {
+		    double rCubeSat = -(satelite.cubeSatDimension/2 + satelite.cableVector.cableLength - satelite.centreOfMass);
+            double rTether1 = -(satelite.cableVector.cableLength - satelite.centreOfMass)/2;
+            double rTether2 = satelite.centreOfMass/2;
+
+		    double velocityScalar = cableVector.dot(velocity)/Math.pow(velocity.length(),2);
+		    Vec3 scaledVelocity = velocity.scale(velocityScalar);
+		    double effectiveAreaRatio = cableVector.add(scaledVelocity).length();
+
+            double fCubeSat = -0.5 * plasmaDensity * satelite.cubeSatDragCoefficient * velocity.lengthSquared()
+                    * Math.pow(satelite.cubeSatDimension, 2);
+
+            double fTether = -0.5 * plasmaDensity * satelite.tetherDragCoefficient *
+                    Math.pow(velocity.length(),2)*effectiveAreaRatio*satelite.cableDiameter;
+            double fTether1 = ((satelite.cableVector.cableLength-satelite.centreOfMass)/
+                    satelite.cableVector.cableLength)*fTether;
+            double fTether2 = (satelite.centreOfMass/satelite.cableVector.cableLength)*fTether;
+
+            dragForce = velocity.withLength(fCubeSat + fTether);
+            dragTorque = cableVector.withLength(1).cross(velocity.withLength(1))
+                    .scale(rCubeSat*fCubeSat + rTether1*fTether1 + rTether2*fTether2);
 		}
 
 		public State scaleAdd(Derivative dSdt, long nanos) {
