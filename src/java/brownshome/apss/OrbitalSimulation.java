@@ -208,7 +208,6 @@ public class OrbitalSimulation {
             dragForce = velocity.withLength(fCubeSat + fTether);
             dragTorque = cableVector.withLength(1).cross(velocity.withLength(1))
                     .scale(rCubeSat*fCubeSat + rTether1*fTether1 + rTether2*fTether2);
-            System.out.println(dragTorque.length());
 		}
 
 		public State scaleAdd(Derivative dSdt, long nanos) {
