@@ -114,6 +114,11 @@ public class APSSSimulator {
 				break;
 			}
 			
+			if(simulation.getState().position.length() < 6.371e6) {
+				System.out.println("Tether impacted Earth");
+				break;
+			}
+			
 			simulation.step();
 		}
 		
