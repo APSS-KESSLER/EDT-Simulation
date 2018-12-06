@@ -59,7 +59,7 @@ public class OrbitalSimulation {
 			this(orbit.position, orbit.velocity, time);
 		}
 
-		private Vec3 lorentzForce() {			
+		private Vec3 lorentzForce() {
 			double cableLength = cableVector.length();
 			Vec3 cableUnitVector = cableVector.scale(1 / cableLength);
 			
@@ -137,7 +137,7 @@ public class OrbitalSimulation {
 				} else {
 					high = mid;
 				}
-			} while(Math.abs(low - high) / targetEndVoltage > 1e-4 && i < 1000);
+			} while(Math.abs(high - low) > 1e-7 && i < 1000);
 			
 			if(i == 1000) {
 				System.out.println("Failed to converge");
