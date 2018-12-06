@@ -11,6 +11,7 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 	private String name;
 
 	public static final List<CableFunction> CABLE_FUNCTIONS;
+	public final double cableLength;
 
 	static {
 		CABLE_FUNCTIONS = Collections.unmodifiableList(Arrays.asList(
@@ -27,24 +28,25 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 				acrossVelocity(1000)));
 	}
 	
-	private CableFunction(String name) {
+	private CableFunction(String name, double cableLength) {
 		this.name = name;
+		this.cableLength = cableLength;
 	}
 	
-	public static CableFunction towardsGravity(double distance) {
-		return new CableFunction("Towards gravity - " + distance + "m") {
+	static CableFunction towardsGravity(double distance) {
+		return new CableFunction("Towards gravity - " + distance + "m", distance) {
 			@Override
-			public Vec3 apply(State state) {
-				return state.gravity.withLength(distance);
+			public Vec3 getCableDirection(State state) {
+				return state.gravity;
 			}
 		};
 	}
 
-	public static CableFunction acrossVelocity(double distance) {
-		return new CableFunction("Across velocity - " + distance + "m") {
+	static CableFunction acrossVelocity(double distance) {
+		return new CableFunction("Across velocity - " + distance + "m", distance) {
 			@Override
-			public Vec3 apply(State state) {
-				return state.position.cross(state.velocity).withLength(distance);
+			public Vec3 getCableDirection(State state) {
+				return state.position.cross(state.velocity);
 			}
 		};
 	}
@@ -53,4 +55,11 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 	public String toString() {
 		return name;
 	}
+
+	abstract Vec3 getCableDirection(State state);
+
+    @Override
+    public Vec3 apply(State state) {
+        return getCableDirection(state).withLength(cableLength);
+    }
 }

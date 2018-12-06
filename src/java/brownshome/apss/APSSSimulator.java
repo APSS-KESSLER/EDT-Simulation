@@ -64,7 +64,8 @@ public class APSSSimulator {
 				throw new ParseException("No function found: " + CableFunction.CABLE_FUNCTIONS.toString());
 			}
 			
-			Satellite sat = new Satellite(chosenFunction, 0, mass, cableDiameter, conductivity);
+			//TODO fill in drag values
+			Satellite sat = new Satellite(chosenFunction, 0, 0.1, mass, cableDiameter, conductivity, 1, 1);
 			
 			List<State> states = runHeadlessSimulation(sat, new OrbitCharacteristics(0.0, height, inclination, 0.0, 0.0, 0.0), Duration.ofHours(6), Duration.ofMinutes(1),
 					Duration.ofMillis(50));
