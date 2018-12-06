@@ -25,6 +25,11 @@ public class Satellite {
 		this.centreOfMass = centreOfMass();
 	}
 
+	/** This is the default constructor used by the MATLAB scripts */
+	public Satellite(CableFunction cableVector, double bias, double mass, double cableDiameter, double cableConductivity) {
+		this(cableVector, bias, 0.1, mass, cableDiameter, cableConductivity, 2.2, 2.0);
+	}
+
 	/**
 	 * Finds the centre of mass of the system along the axis of the length of the tether.
 	 * The centre of mass is relative to the unattached end of the tether

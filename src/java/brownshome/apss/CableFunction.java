@@ -33,7 +33,7 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 		this.cableLength = cableLength;
 	}
 	
-	static CableFunction towardsGravity(double distance) {
+	public static CableFunction towardsGravity(double distance) {
 		return new CableFunction("Towards gravity - " + distance + "m", distance) {
 			@Override
 			public Vec3 getCableDirection(State state) {
@@ -42,7 +42,7 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 		};
 	}
 
-	static CableFunction acrossVelocity(double distance) {
+	public static CableFunction acrossVelocity(double distance) {
 		return new CableFunction("Across velocity - " + distance + "m", distance) {
 			@Override
 			public Vec3 getCableDirection(State state) {
@@ -56,7 +56,7 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 		return name;
 	}
 
-	abstract Vec3 getCableDirection(State state);
+	public abstract Vec3 getCableDirection(State state);
 
     @Override
     public Vec3 apply(State state) {
