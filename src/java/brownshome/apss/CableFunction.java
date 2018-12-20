@@ -50,7 +50,24 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 			}
 		};
 	}
-	
+
+	public static CableFunction acrossVelocitySpin(double distance) {
+		return new CableFunction("Across velocity Spun - " + distance + "m", distance) {
+			@Override
+			public Vec3 getCableDirection(State state) {
+				Vec3 base = state.position.cross(state.velocity);
+
+				// This needs to rotate around state.position - use a matrix
+				// The angle (time % period) / period * 2PI radians if spin is constant speed
+				// Find angular displacement as angular displacement plus instantaneous angular speed times time step
+				// Find angular speed as angular speed plus torque divided by inertia
+				// We need to calculate moment of inertia
+				//return base.rotateY(time % period);
+				return new Vec3();
+			}
+		};
+	}
+
 	@Override
 	public String toString() {
 		return name;
