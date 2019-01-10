@@ -1,33 +1,56 @@
 package brownshome.apss;
 
 public class Satellite {
+
+	// Constants
+	public final static double CUBESAT_DRAG_COEFFICIENT = 2.2;
+	public final static double TETHER_DRAG_COEFFICIENT = 2.0;
+	public final static double DEFAULT_CABLE_DIAMETER = 0.003; // metres
+	public final static double CUBESAT_DIMENSION = 0.1; // metres
+	public final static double DEFAULT_CABLE_DENSITY = 5000; // kg/m^3
+
 	public final CableFunction cableVector;
-	public final double cubeSatDimension;
 	public final double mass;
 	public final double cableDiameter;
 	public final double cableConductivity;
-	public final double cubeSatDragCoefficient;
-	public final double tetherDragCoefficient;
 	public final double centreOfMass;
 	public final double bias;
-	
-	public Satellite(CableFunction cableVector, double bias, double cubeSatDimension, double mass, double cableDiameter,
-					 double cableConductivity,
-					 double cubeSatDragCoefficient, double tetherDragCoefficient) {
+	public final double cableDensity;
+
+	/** This is the default constructor used by the MATLAB scripts */
+	public Satellite(CableFunction cableVector, double bias, double mass, double cableDiameter,
+					 double cableConductivity, double cableDensity) {
 		this.cableVector = cableVector;
-		this.cubeSatDimension = cubeSatDimension;
 		this.mass = mass;
 		this.cableDiameter = cableDiameter;
 		this.bias = bias;
 		this.cableConductivity = cableConductivity;
-		this.cubeSatDragCoefficient = cubeSatDragCoefficient;
-		this.tetherDragCoefficient = tetherDragCoefficient;
 		this.centreOfMass = centreOfMass();
+		this.cableDensity = cableDensity;
 	}
 
-	/** This is the default constructor used by the MATLAB scripts */
-	public Satellite(CableFunction cableVector, double bias, double mass, double cableDiameter, double cableConductivity) {
-		this(cableVector, bias, 0.1, mass, cableDiameter, cableConductivity, 2.2, 2.0);
+	/** This is a constructor used by the Java simulation program */
+	public Satellite(CableFunction cableVector, double bias, double mass, double cableDiameter,
+					 double cableConductivity) {
+		this.cableVector = cableVector;
+		this.mass = mass;
+		this.cableDiameter = cableDiameter;
+		this.bias = bias;
+		this.cableConductivity = cableConductivity;
+		this.centreOfMass = centreOfMass();
+		this.cableDensity = DEFAULT_CABLE_DENSITY;
+	}
+
+	/** This is a constructor used by the Java simulation program */
+	public Satellite(CableFunction cableVector, double bias, double mass,
+					 double cableConductivity) {
+		this.cableVector = cableVector;
+		this.mass = mass;
+		this.cableDiameter = DEFAULT_CABLE_DIAMETER;
+		this.bias = bias;
+		this.cableConductivity = cableConductivity;
+		this.centreOfMass = centreOfMass();
+		this.cableDensity = DEFAULT_CABLE_DENSITY;
 	}
 
 	/**
@@ -37,11 +60,10 @@ public class Satellite {
 	 */
 	private double centreOfMass() {
 
-		// Need to calculate density; 5000 kg/m^3 is from FDP
-		double cableMass = 5000 * Math.PI*Math.pow(cableDiameter/2, 2) * cableVector.cableLength;
+		double cableMass = cableDensity * Math.PI*Math.pow(cableDiameter/2, 2) * cableVector.cableLength;
 
 		// Take the end of the tether
-		double cubeSatCentreOfMass = cableVector.cableLength + cubeSatDimension/2;
+		double cubeSatCentreOfMass = cableVector.cableLength + CUBESAT_DIMENSION/2;
 		double tetherCentreOfMass = cableVector.cableLength/2;
 
 		double centreOfMass = (mass * cubeSatCentreOfMass + cableMass * tetherCentreOfMass)/

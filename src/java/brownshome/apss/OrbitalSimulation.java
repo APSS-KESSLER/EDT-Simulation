@@ -187,7 +187,7 @@ public class OrbitalSimulation {
          * Finds the drag force and torque acting on the tether due to the drag force.
          */
 		private void dragCalculation() {
-		    double rCubeSat = -(satellite.cubeSatDimension/2 + satellite.cableVector.cableLength - satellite.centreOfMass);
+		    double rCubeSat = -(Satellite.CUBESAT_DIMENSION/2 + satellite.cableVector.cableLength - satellite.centreOfMass);
             double rTether1 = -(satellite.cableVector.cableLength - satellite.centreOfMass)/2;
             double rTether2 = satellite.centreOfMass/2;
 
@@ -195,10 +195,10 @@ public class OrbitalSimulation {
 		    Vec3 scaledVelocity = velocity.scale(velocityScalar);
 		    double effectiveAreaRatio = cableVector.add(scaledVelocity).length();
 
-            double fCubeSat = -0.5 * atmosphericDensity * satellite.cubeSatDragCoefficient * velocity.lengthSquared()
-                    * Math.pow(satellite.cubeSatDimension, 2);
+            double fCubeSat = -0.5 * atmosphericDensity * Satellite.CUBESAT_DRAG_COEFFICIENT * velocity.lengthSquared()
+                    * Math.pow(Satellite.CUBESAT_DIMENSION, 2);
 
-            double fTether = -0.5 * atmosphericDensity * satellite.tetherDragCoefficient *
+            double fTether = -0.5 * atmosphericDensity * Satellite.TETHER_DRAG_COEFFICIENT *
                     Math.pow(velocity.length(),2)*effectiveAreaRatio*satellite.cableDiameter;
             double fTether1 = ((satellite.cableVector.cableLength-satellite.centreOfMass)/
                     satellite.cableVector.cableLength)*fTether;
