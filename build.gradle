@@ -1,6 +1,7 @@
 plugins {
 	id 'c'
 	id 'application'
+	id 'org.openjfx.javafxplugin' version '0.0.5'
 }
 
 sourceSets {
@@ -11,14 +12,16 @@ sourceSets {
 }
 
 mainClassName = 'brownshome.apss.Display'
-targetCompatibility = 8
-sourceCompatibility = 8
 compileJava.options.encoding = "UTF-8"
 
 jar {
 	manifest {
 		attributes('Main-Class': mainClassName)
 	}
+}
+
+javafx {
+	modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
 repositories {
