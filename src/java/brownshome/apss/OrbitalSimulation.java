@@ -1,6 +1,9 @@
 package brownshome.apss;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import javafx.application.Application;
 
@@ -15,6 +18,7 @@ public class OrbitalSimulation {
 	
 	private long timeStep;
 	private long currentTime;
+	public List<Double> netTorques = new ArrayList<>();
 	
 	private class Derivative {
 		public final Vec3 dp;
@@ -33,6 +37,7 @@ public class OrbitalSimulation {
 	
 	public class State {
 		public final Vec3 position;
+		public final int quarter;
 		public final Vec3 velocity;
 		public final Vec3 magneticField;
 		public final Vec3 acceleration;
@@ -43,15 +48,21 @@ public class OrbitalSimulation {
 		public Vec3 dragForce;
 		public Vec3 dragTorque;
 		public Vec3 netTorque;
+		public double netTorqueAverage;
 		public final Vec3 gravityGradientTorque;
 		public final double plasmaDensity;
         public final double atmosphericDensity;
 		public double current;
 		public final long time;
+//		public double momentOfInertia;
+//		public double angularDisplacement;
+//		public double angularSpeed;
 		
 		public State(Vec3 position, Vec3 velocity, long time) {
 			this.position = position;
+			this.quarter = 0; // keeps track of which quarter of the two orbit cycle we are in
 			this.time = time;
+//			this.momentOfInertia = satellite.momentOfInertiaSpinning();
 			this.velocity = velocity;
 			magneticField = UnderlyingModels.getMagneticFieldStrength(position);
 			plasmaDensity = UnderlyingModels.getPlasmaDensity(position);
@@ -65,13 +76,26 @@ public class OrbitalSimulation {
 			dragTorque = new Vec3();
 			dragCalculation();
 			netTorque = dragTorque.add(lorentzTorque);
+			netTorques.add(netTorque.dot(velocity.cross(cableVector).withLength(1.0)));
+            netTorqueAverage = calculateMean(netTorques);
 			gravityGradientTorque = gravityGradientTorque();
-			acceleration = gravity.scaleAdd(lorentzForce.add(dragForce), 1.0 / OrbitalSimulation.this.satellite.mass);
+			acceleration = gravity.scaleAdd(lorentzForce.add(dragForce), 1.0/OrbitalSimulation.this.satellite.mass);
+//			angularDisplacement = calculateAngularDisplacement();
+//			angularSpeed = calculateAngularSpeed();
 		}
 
 		public State(OrbitCharacteristics orbit, long time) {
 			this(orbit.position, orbit.velocity, time);
 		}
+
+		private double calculateMean(Collection<Double> nums) {
+		    Double total = 0.0;
+		    for(Double num : nums ) {
+		        total += num;
+            }
+
+            return total/nums.size();
+        }
 
 		private void lorentzCalculation() {
 			double cableLength = cableVector.length();
@@ -180,7 +204,8 @@ public class OrbitalSimulation {
 		private double emitterVoltageDrop(double endCurrent) {
 			//https://ieeexplore-ieee-org.ezproxy.auckland.ac.nz/stamp/stamp.jsp?tp=&arnumber=4480910
 			
-			return 35 - OrbitalSimulation.this.satellite.bias; //Crappy estimate, but gets the job done
+//			return 35 - OrbitalSimulation.this.satellite.bias; //Crappy estimate, but gets the job done
+			return 0; //Crappy estimate, but gets the job done
 		}
 
         /**
@@ -212,6 +237,41 @@ public class OrbitalSimulation {
 		public State scaleAdd(Derivative dSdt, long nanos) {
 			return new State(position.scaleAdd(dSdt.dp, nanos / NANOS_PER_SECOND), velocity.scaleAdd(dSdt.dv, nanos / NANOS_PER_SECOND), currentTime);
 		}
+
+        /**
+         * Retrieves the time step of the simulation.
+         * @return
+         */
+		public long getTimeStep() {
+		    return timeStep;
+        }
+
+//        /**
+//         * Find angular displacement (free end of tether) as angular displacement plus instantaneous angular
+//         * speed times time step
+//         * @return new angular displacement
+//          */
+//        private double calculateAngularDisplacement() {
+//		    return angularDisplacement + angularSpeed * getTimeStep();
+//        }
+//
+//        /**
+//         * Find angular speed as angular speed plus torque (in appropriate direction) divided by inertia
+//         * @return new angular speed
+//         */
+//        private double calculateAngularSpeed() {
+//            Vec3 torqueDirection = velocity.cross(cableVector).withLength(1.0);
+//            return angularSpeed + netTorque.dot(torqueDirection) / momentOfInertia;
+//        }
+
+		/**
+		 * Retrieves the number of revolutions a spinning
+		 * @return
+		 */
+		public double getRevsPerOrbit() {
+        	return satellite.revsPerOrbit;
+		}
+
 	}
 	
 	private State state;

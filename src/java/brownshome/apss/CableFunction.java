@@ -19,13 +19,18 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 				towardsGravity(50),
 				towardsGravity(100),
 				towardsGravity(200),
+                towardsGravity(500),
+                towardsGravity(1000),
 
 				acrossVelocity(25),
 				acrossVelocity(50),
 				acrossVelocity(100),
 				acrossVelocity(200),
 				acrossVelocity(500),
-				acrossVelocity(1000)));
+				acrossVelocity(1000),
+
+				acrossVelocitySpin(500),
+                acrossVelocitySpin(1000)));
 	}
 	
 	private CableFunction(String name, double cableLength) {
@@ -55,15 +60,39 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 		return new CableFunction("Across velocity Spun - " + distance + "m", distance) {
 			@Override
 			public Vec3 getCableDirection(State state) {
-				Vec3 base = state.position.cross(state.velocity);
 
-				// This needs to rotate around state.position - use a matrix
-				// The angle (time % period) / period * 2PI radians if spin is constant speed
-				// Find angular displacement as angular displacement plus instantaneous angular speed times time step
-				// Find angular speed as angular speed plus torque divided by inertia
-				// We need to calculate moment of inertia
-				//return base.rotateY(time % period);
-				return new Vec3();
+				Vec3 towardsEarth = state.gravity;
+
+				// Base (to define as 0 radians) is component of velocity vector perpendicular to gravity
+				Vec3 velocityOntoGravityProjection = state.velocity.projectOnto(towardsEarth);
+				Vec3 base = state.velocity.add(velocityOntoGravityProjection.scale(-1));
+
+                // TODO set revs per orbit in Satellite through Matlab
+
+				// Retrieve number of times satellite rotates in orbit
+				double revsPerOrbit = state.getRevsPerOrbit();
+
+				// Find current angle between base satellite position and line pointing North
+				Vec3 north = new Vec3(0, 1, 0);
+				double orbitalAngle = towardsEarth.angleBetween(north);
+
+				if (state.position.x < 0) {
+					orbitalAngle = Math.PI/2 - orbitalAngle;
+				} else {
+					orbitalAngle = orbitalAngle + Math.PI/2;
+				}
+
+				// Find fraction of orbit satellite has moved through
+				double currentFraction = orbitalAngle / (2*Math.PI);
+
+				// Find total angle satellite will rotate through in an orbit
+				double totalAngle = 2 * Math.PI * revsPerOrbit;
+
+				// Find angle to rotate satellite by
+				double rotateAngle = currentFraction * totalAngle % (2 * Math.PI);
+
+                // Rotate around base position to find new cable direction
+				return base.rotateAbout(towardsEarth, rotateAngle);
 			}
 		};
 	}

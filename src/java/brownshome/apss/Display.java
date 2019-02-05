@@ -118,6 +118,8 @@ public class Display extends Application {
 					dragTorque.dot(torqueDirection) * 1e6) + "uNm", 50, 190);
 			context.fillText("Net Torque: " + String.format("%.3f", simulation.getState().
 					netTorque.dot(torqueDirection) * 1e6) + "uNm", 50, 210);
+			context.fillText("To apply torque: " + String.format("%.3f", simulation.getState().
+					netTorqueAverage * 1e6) + "uNm", 50, 230);
 		}
 	}
 	
