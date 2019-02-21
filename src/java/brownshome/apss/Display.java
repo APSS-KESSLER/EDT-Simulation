@@ -101,7 +101,8 @@ public class Display extends Application {
 			
 			context.setTransform(new Affine());
 
-			Vec3 torqueDirection = simulation.getState().velocity.cross(simulation.getState().cableVector).withLength(1.0);
+			// We project the torque onto the position vector to gain a +/- value for the magnitude of the torque.
+			Vec3 torqueDirection = simulation.getState().position.withLength(1.0);
 			
 			context.clearRect(0, 40, 200, 200);
 			context.fillText("Magnetic Field: " + (int) (simulation.getState().magneticField.length() * 1e6) + "uT", 50, 50);
@@ -110,16 +111,16 @@ public class Display extends Application {
 			context.fillText("Lorentz Force: " + String.format("%.3f", simulation.getState().
 					lorentzForce.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uN", 50, 110);
 			context.fillText("Lorentz Torque: " + String.format("%.3f", simulation.getState().
-					lorentzTorque.dot(torqueDirection) * 1e6) + "uNm", 50, 130);
+					lorentzTorque.dot(torqueDirection) * 1e3) + "mNm", 50, 130);
 			context.fillText("Current: " + String.format("%.3fmA", simulation.getState().current * 1e3), 50, 150);
 			context.fillText("Drag Force: " + String.format("%.3f", simulation.getState().
 					dragForce.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uN", 50, 170);
 			context.fillText("Drag Torque: " + String.format("%.3f", simulation.getState().
-					dragTorque.dot(torqueDirection) * 1e6) + "uNm", 50, 190);
+					dragTorque.dot(torqueDirection) * 1e3) + "mNm", 50, 190);
 			context.fillText("Net Torque: " + String.format("%.3f", simulation.getState().
-					netTorque.dot(torqueDirection) * 1e6) + "uNm", 50, 210);
-			context.fillText("To apply torque: " + String.format("%.3f", simulation.getState().
-					netTorqueAverage * 1e6) + "uNm", 50, 230);
+					netTorque.dot(torqueDirection) * 1e3) + "mNm", 50, 210);
+			context.fillText("Average Torque: " + String.format("%.3f", simulation.getState().
+					netTorqueAverage * 1e3) + "mNm", 50, 230);
 		}
 	}
 	
