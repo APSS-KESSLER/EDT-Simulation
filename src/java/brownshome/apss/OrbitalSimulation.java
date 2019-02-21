@@ -18,20 +18,24 @@ public class OrbitalSimulation {
 	
 	private long timeStep;
 	private long currentTime;
-	public List<Double> netTorques = new ArrayList<>();
 	
 	private class Derivative {
 		public final Vec3 dp;
 		public final Vec3 dv;
+
+		/** In Nm */
+		public final double changeInAngularMomentum;
 		
 		public Derivative(State state) {
 			dp = state.velocity;
 			dv = state.acceleration;
+			changeInAngularMomentum = state.netTorque.dot(state.position.withLength(1.0));
 		}
 
 		public Derivative(Derivative a, Derivative b, Derivative c, Derivative d) {
 			dp = a.dp.scaleAdd(b.dp, 2.0).scaleAdd(c.dp, 2.0).add(d.dp).scale(1.0 / 6.0);
 			dv = a.dv.scaleAdd(b.dv, 2.0).scaleAdd(c.dv, 2.0).add(d.dv).scale(1.0 / 6.0);
+			changeInAngularMomentum = (a.changeInAngularMomentum + b.changeInAngularMomentum * 2.0 + c.changeInAngularMomentum * 2.0 + d.changeInAngularMomentum) / 6.0;
 		}
 	}
 	
@@ -48,7 +52,11 @@ public class OrbitalSimulation {
 		public Vec3 dragForce;
 		public Vec3 dragTorque;
 		public Vec3 netTorque;
-		public double netTorqueAverage;
+
+		public final double accumulatedAngularMomentum;
+
+		/** The average torque that the system has experienced from lorentz and drag forces. */
+		public final double netTorqueAverage;
 		public final Vec3 gravityGradientTorque;
 		public final double plasmaDensity;
         public final double atmosphericDensity;
@@ -57,8 +65,14 @@ public class OrbitalSimulation {
 //		public double momentOfInertia;
 //		public double angularDisplacement;
 //		public double angularSpeed;
-		
-		public State(Vec3 position, Vec3 velocity, long time) {
+
+		/**
+		 * @param position
+		 * @param velocity
+		 * @param time
+		 * @param accumulatedAngularMomentum In the units of Nsm
+		 */
+		public State(Vec3 position, Vec3 velocity, long time, double accumulatedAngularMomentum) {
 			this.position = position;
 			this.quarter = 0; // keeps track of which quarter of the two orbit cycle we are in
 			this.time = time;
@@ -76,26 +90,17 @@ public class OrbitalSimulation {
 			dragTorque = new Vec3();
 			dragCalculation();
 			netTorque = dragTorque.add(lorentzTorque);
-			netTorques.add(netTorque.dot(velocity.cross(cableVector).withLength(1.0)));
-            netTorqueAverage = calculateMean(netTorques);
 			gravityGradientTorque = gravityGradientTorque();
 			acceleration = gravity.scaleAdd(lorentzForce.add(dragForce), 1.0/OrbitalSimulation.this.satellite.mass);
+			this.accumulatedAngularMomentum = accumulatedAngularMomentum;
+			netTorqueAverage = accumulatedAngularMomentum / currentTime * NANOS_PER_SECOND;
 //			angularDisplacement = calculateAngularDisplacement();
 //			angularSpeed = calculateAngularSpeed();
 		}
 
 		public State(OrbitCharacteristics orbit, long time) {
-			this(orbit.position, orbit.velocity, time);
+			this(orbit.position, orbit.velocity, time, 0.0);
 		}
-
-		private double calculateMean(Collection<Double> nums) {
-		    Double total = 0.0;
-		    for(Double num : nums ) {
-		        total += num;
-            }
-
-            return total/nums.size();
-        }
 
 		private void lorentzCalculation() {
 			double cableLength = cableVector.length();
@@ -235,7 +240,11 @@ public class OrbitalSimulation {
 		}
 
 		public State scaleAdd(Derivative dSdt, long nanos) {
-			return new State(position.scaleAdd(dSdt.dp, nanos / NANOS_PER_SECOND), velocity.scaleAdd(dSdt.dv, nanos / NANOS_PER_SECOND), currentTime);
+			return new State(
+					position.scaleAdd(dSdt.dp, nanos / NANOS_PER_SECOND),
+					velocity.scaleAdd(dSdt.dv, nanos / NANOS_PER_SECOND),
+					currentTime,
+					accumulatedAngularMomentum + dSdt.changeInAngularMomentum * nanos / NANOS_PER_SECOND);
 		}
 
         /**
