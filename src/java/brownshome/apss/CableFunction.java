@@ -19,6 +19,9 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 				towardsGravity(50),
 				towardsGravity(100),
 				towardsGravity(200),
+				towardsGravity(500),
+				towardsGravity(1000),
+
 
 				acrossVelocity(25),
 				acrossVelocity(50),

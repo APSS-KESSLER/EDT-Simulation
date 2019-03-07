@@ -8,6 +8,8 @@ public class Satellite {
 	public final static double DEFAULT_CABLE_DIAMETER = 0.003; // metres
 	public final static double CUBESAT_DIMENSION = 0.1; // metres
 	public final static double DEFAULT_CABLE_DENSITY = 5000; // kg/m^3
+	public final static double DEFAULT_YOUNGE_MODULUS = 128e9; // Pa
+	public final static double DEFAULT_DAMPING_CONSTANT = 0.3; // SEAN
 
 	public final CableFunction cableVector;
 	public final double mass;
@@ -17,9 +19,21 @@ public class Satellite {
 	public final double bias;
 	public final double cableDensity;
 
+	/** This is the force applied by the material if it was extended to double it's length.
+	 * e.g. F = k * (m - M) / M
+	 **/
+	public final double youngsModulus;
+
+	/**
+	 * This is how much the tether resists motion due to internal friction.
+	 * F_damping = -g(dx/dt) where g is the damping constant
+	 * Has units of kg/s or N/(m/s)
+	 */
+	public final double dampeningConstant;
+
 	/** This is the default constructor used by the MATLAB scripts */
 	public Satellite(CableFunction cableVector, double bias, double mass, double cableDiameter,
-					 double cableConductivity, double cableDensity) {
+					 double cableConductivity, double cableDensity, double youngsModulus, double dampeningConstant) {
 		this.cableVector = cableVector;
 		this.mass = mass;
 		this.cableDiameter = cableDiameter;
@@ -27,30 +41,28 @@ public class Satellite {
 		this.cableConductivity = cableConductivity;
 		this.centreOfMass = centreOfMass();
 		this.cableDensity = cableDensity;
+
+		this.youngsModulus = youngsModulus;
+		this.dampeningConstant = dampeningConstant;
 	}
 
 	/** This is a constructor used by the Java simulation program */
-	public Satellite(CableFunction cableVector, double bias, double mass, double cableDiameter,
-					 double cableConductivity) {
+	public Satellite(CableFunction cableVector, double bias, double mass, double cableDiameter, double cableConductivity) {
 		this.cableVector = cableVector;
 		this.mass = mass;
 		this.cableDiameter = cableDiameter;
 		this.bias = bias;
 		this.cableConductivity = cableConductivity;
 		this.centreOfMass = centreOfMass();
+
 		this.cableDensity = DEFAULT_CABLE_DENSITY;
+		this.youngsModulus = DEFAULT_YOUNGE_MODULUS;
+		this.dampeningConstant = DEFAULT_DAMPING_CONSTANT;
 	}
 
 	/** This is a constructor used by the Java simulation program */
-	public Satellite(CableFunction cableVector, double bias, double mass,
-					 double cableConductivity) {
-		this.cableVector = cableVector;
-		this.mass = mass;
-		this.cableDiameter = DEFAULT_CABLE_DIAMETER;
-		this.bias = bias;
-		this.cableConductivity = cableConductivity;
-		this.centreOfMass = centreOfMass();
-		this.cableDensity = DEFAULT_CABLE_DENSITY;
+	public Satellite(CableFunction cableVector, double bias, double mass, double cableConductivity) {
+		this(cableVector, bias, mass, DEFAULT_CABLE_DIAMETER, cableConductivity);
 	}
 
 	/**
