@@ -14,40 +14,40 @@ public class Satellite {
 	public final double cableDiameter;
 	public final double cableConductivity;
 	public final double centreOfMass;
-	public final double bias;
 	public final double cableDensity;
+	public final Emitter emitter;
 
 	/** This is the default constructor used by the MATLAB scripts */
-	public Satellite(CableFunction cableVector, double bias, double mass, double cableDiameter,
+	public Satellite(CableFunction cableVector, Emitter emitter, double mass, double cableDiameter,
 					 double cableConductivity, double cableDensity) {
 		this.cableVector = cableVector;
 		this.mass = mass;
 		this.cableDiameter = cableDiameter;
-		this.bias = bias;
+		this.emitter = emitter;
 		this.cableConductivity = cableConductivity;
 		this.centreOfMass = centreOfMass();
 		this.cableDensity = cableDensity;
 	}
 
 	/** This is a constructor used by the Java simulation program */
-	public Satellite(CableFunction cableVector, double bias, double mass, double cableDiameter,
+	public Satellite(CableFunction cableVector, Emitter emitter, double mass, double cableDiameter,
 					 double cableConductivity) {
 		this.cableVector = cableVector;
 		this.mass = mass;
 		this.cableDiameter = cableDiameter;
-		this.bias = bias;
+		this.emitter = emitter;
 		this.cableConductivity = cableConductivity;
 		this.centreOfMass = centreOfMass();
 		this.cableDensity = DEFAULT_CABLE_DENSITY;
 	}
 
 	/** This is a constructor used by the Java simulation program */
-	public Satellite(CableFunction cableVector, double bias, double mass,
+	public Satellite(CableFunction cableVector, Emitter emitter, double mass,
 					 double cableConductivity) {
 		this.cableVector = cableVector;
 		this.mass = mass;
 		this.cableDiameter = DEFAULT_CABLE_DIAMETER;
-		this.bias = bias;
+		this.emitter = emitter;
 		this.cableConductivity = cableConductivity;
 		this.centreOfMass = centreOfMass();
 		this.cableDensity = DEFAULT_CABLE_DENSITY;

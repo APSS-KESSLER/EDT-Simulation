@@ -48,6 +48,7 @@ public class OrbitalSimulation {
         public final double atmosphericDensity;
 		public double current;
 		public final long time;
+		public Emitter.EmitterResult emitterResult;
 		
 		public State(Vec3 position, Vec3 velocity, long time) {
 			this.position = position;
@@ -60,6 +61,7 @@ public class OrbitalSimulation {
 			cableVector = OrbitalSimulation.this.satellite.cableVector.apply(this);
 			lorentzForce = new Vec3();
 			lorentzTorque = new Vec3();
+			emitterResult = new Emitter.EmitterResult();
             lorentzCalculation(); // calculate Lorentz force and torque
 			dragForce = new Vec3();
 			dragTorque = new Vec3();
@@ -75,40 +77,55 @@ public class OrbitalSimulation {
 
 		private void lorentzCalculation() {
 			double cableLength = cableVector.length();
-            //double cableLength = OrbitalSimulation.this.satellite.cableVector.cableLength;
-			//System.out.println(cableLength);
+
 			Vec3 cableUnitVector = cableVector.scale(1 / cableLength);
 			
-			//Em = (B x v) . dl
+			// Em = (B x v) . dl
+			// This is the voltage gradient due to the Earth's magnetic field.
 			double voltageGradient = velocity.cross(magneticField).dot(cableUnitVector);
-			
-			if(voltageGradient < 0)
+
+			if(voltageGradient < 0) {
 				return;
+			}
 			
-			//Eq (3) 
+			// Eq (3)
+			// This is a scalar that is used to convert the voltage between the plasma and the tether to a dIdl value.
 			double dIdlConstant = -UnderlyingModels.e * plasmaDensity * OrbitalSimulation.this.satellite.cableDiameter * 
 					Math.sqrt(-2 * UnderlyingModels.e / UnderlyingModels.me);
 			
-			//Eq (4)
+			// Eq (4)
+			// This is the resistance of the cable in ohm / m
 			double resistivity = 1.0 / (Math.PI * OrbitalSimulation.this.satellite.cableDiameter
 					* OrbitalSimulation.this.satellite.cableDiameter / 4 * OrbitalSimulation.this.satellite.cableConductivity);
 			
 			//Keep iterating with different starting voltages to find the voltage where Vc + RI + Ve = Vemf * l, this should be findable with a binary search.
-			
 			class Result {
+				/** The integral of Il */
 				double currentLength = 0;
+
+				/** The integral of Ilr where r is the displacement from the COM of the satellite. */
 				double currentLengthRadius = 0;
+
+				/** This is the current at the satellite end of the tether. */
 				double endCurrent;
+
+				/** The is the voltage relative to the plasma at the satellite end of the tether. */
 				double endVoltage;
-			
+
+				/*
+				 * @param startingVoltage is the voltage of the free end of the tether
+				 */
 				Result(double startingVoltage, int iterations) {
 					double current = 0;
 					double voltage = startingVoltage;
 					double dl = cableLength / iterations;
 					
-					//Euler integration of the system
+					// Euler integration of the system.
+					//
 					for (int i = 0; i < iterations; i++) {
-                        double radius = i * dl;
+						double radius = i * dl;
+
+						// Voltage compared to the plasma
 						double deltaV = voltage - radius * voltageGradient;
 						
 						voltage += current * resistivity * dl;
@@ -124,63 +141,61 @@ public class OrbitalSimulation {
 					}
 					
 					endCurrent = current;
-					endVoltage = voltage;
+					endVoltage = voltage - cableLength * voltageGradient;
 				}
 			}
-			
-			double targetEndVoltage = voltageGradient * cableLength;
-			double low = -1000;
-			double high = targetEndVoltage + 1000;
-			double endVoltage;
-			
+
+			Result initialGuess = new Result(0, 10);
+			double requiredVoltageDrop;
+
+			double low, high;
+
+			requiredVoltageDrop = satellite.emitter.calculateRequiredVoltageDrop(initialGuess.endCurrent);
+
 			Result r;
-			int i = 0;
-			
-			r = new Result(low, 10);
-			endVoltage = emitterVoltageDrop(r.endCurrent) + r.endVoltage;
-			if(endVoltage > targetEndVoltage) {
-				current = 0;
-				return;
+
+			if(requiredVoltageDrop < -initialGuess.endVoltage) {
+				low = 0;
+				high = 10;
+
+				do {
+					high *= 2;
+					r = new Result(high, 10);
+					requiredVoltageDrop = satellite.emitter.calculateRequiredVoltageDrop(r.endCurrent);
+				} while(requiredVoltageDrop < -r.endVoltage);
+			} else {
+				low = -10;
+				high = 0;
+
+				do {
+					low *= 2;
+					r = new Result(low, 10);
+					requiredVoltageDrop = satellite.emitter.calculateRequiredVoltageDrop(r.endCurrent);
+				} while(requiredVoltageDrop < -r.endVoltage);
 			}
-			
-			do {
-				i++;
-				int iterations = 10;
-				if(high - low < 10) {
-					iterations = 100;
-				}
-				
-				double mid = low / 2 + high / 2;
-				r = new Result(mid, iterations);
-				endVoltage = emitterVoltageDrop(r.endCurrent) + r.endVoltage;
-				if(endVoltage < targetEndVoltage) {
+
+			for(int i = 0; i < 250; i++) {
+				double mid = (low + high) * 0.5;
+				r = new Result(mid, 100);
+
+				requiredVoltageDrop = satellite.emitter.calculateRequiredVoltageDrop(r.endCurrent);
+
+				if(requiredVoltageDrop < -r.endVoltage) {
 					low = mid;
 				} else {
 					high = mid;
 				}
-			} while(Math.abs(high - low) > 1e-7 && i < 1000);
-			
-			if(i == 1000) {
-				System.out.println("Failed to converge");
-			} else {
-			    //System.out.println("Converged");
-            }
-			
+			}
+
+			r = new Result(low, 100);
+			this.emitterResult = satellite.emitter.calculateFinalResult(r.endCurrent, -r.endVoltage);
 			current = r.endCurrent;
 			lorentzForce = cableUnitVector.cross(magneticField).scale(r.currentLength);
 			lorentzTorque = cableUnitVector.cross(cableUnitVector.cross(magneticField)).scale(r.currentLengthRadius);
 		}
 
-
-
         private Vec3 gravityGradientTorque() {
             return new Vec3(); // needs to be calculated
-		}
-		
-		private double emitterVoltageDrop(double endCurrent) {
-			//https://ieeexplore-ieee-org.ezproxy.auckland.ac.nz/stamp/stamp.jsp?tp=&arnumber=4480910
-			
-			return 35 - OrbitalSimulation.this.satellite.bias; //Crappy estimate, but gets the job done
 		}
 
         /**
