@@ -10,9 +10,8 @@ public class Emitter {
 
 	private static final double THERMAL_CATHODE_DROP = 200;
 
-
 	/** These values will be NaN if they are undefined. */
-	private final double powerLimit, currentLimit, technologyVoltageDrop, setBias;
+	public final double powerLimit, currentLimit, technologyVoltageDrop, setBias;
 
 	/** Constructs an emitter with an adjustable bias */
 	public Emitter(double powerLimit, double currentLimit, double technologyVoltageDrop) {
