@@ -65,12 +65,68 @@ public class UnderlyingModels {
 	public static double getPlasmaDensity(Vec3 position) {
 		return plasmaDensity;
 	}
-	
-	public static Vec3 getGravitationalAcceleration(Vec3 position) {
-		return position.withLength(-μE / position.lengthSquared());
-	}
 
 	public static double getAtmosphericDensity(Vec3 position) {
 	    return 1.93e-11; // TODO better value
     }
+
+
+	public static Vec3 getGravitationalAcceleration(Vec3 position) {
+		double longitude = atan2(position.x, -position.z);
+		double latitude = atan2(position.y, sqrt(position.x * position.x + position.z * position.z));
+
+		// Altitude of satellite considering constant earth radius
+		double altitude = position.length() - rE;
+
+		String coordinates = longitude + " " + latitude + " " + altitude;
+
+		// Run the model using the most recent (2008) egm data
+		String acceleration = UnderlyingModels.runCommand("GeographicLib-1.49\\Gravity.exe --input-string \"" + coordinates + "\" -n egm2008");
+
+		System.out.println("acceleration: " + acceleration);
+
+		// TODO: convert the string acceleration to vector
+		return new Vec3();
+	}
+
+	public static String runCommand(String command) {
+
+		// WARNING: METHOD IS A WIP. THIS CODE DOES NOT WORK.
+		// It stubbornly refuses to execute what i want it to.
+		// I think the command argument may need to be a string
+		// array but I could figure out how they should be ordered...
+
+		try {
+			// using the Runtime exec method:
+			Process p = Runtime.getRuntime().exec(command);
+
+			BufferedReader stdInput = new BufferedReader(new
+					InputStreamReader(p.getInputStream()));
+
+			BufferedReader stdError = new BufferedReader(new
+					InputStreamReader(p.getErrorStream()));
+
+			String result = null, s;
+
+			// read the output from the command
+			System.out.println("Here is the standard output of the command:\n");
+			while ((s = stdInput.readLine()) != null) {
+				result = result + s;
+			}
+
+			// read any errors from the attempted command
+			System.out.println("Here is the standard error of the command (if any):\n");
+			while ((s = stdError.readLine()) != null) {
+				System.out.println(s);
+			}
+
+			return result;
+			System.exit(0);
+		}
+		catch (IOException e) {
+			System.out.println("exception happened - here's what I know: ");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+	}
 }
