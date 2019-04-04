@@ -2,6 +2,10 @@ package brownshome.apss;
 
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.DoubleFunction;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -22,9 +26,9 @@ import javafx.stage.Stage;
 public class Display extends Application {
 	/** Satellite text fields */
 	@FXML private TextField eccentricity, semiMajorAxis, trueAnomaly, inclination, argumentOfPeriapsis,
-			longitudeOfAscendingNode, mass;
-	
-	@FXML private ChoiceBox<CableFunction> cableDirection;
+			longitudeOfAscendingNode, mass, setBias, currentLimit, powerLimit, cableLength;
+
+	@FXML private ChoiceBox<String> cableDirection;
 	
 	@FXML private TextField timeStep, time, customSpeed;
 	
@@ -46,9 +50,11 @@ public class Display extends Application {
 		setup();
 	}
 
-
 	private void setup() {
-		cableDirection.getItems().addAll(CableFunction.CABLE_FUNCTIONS);
+		cableDirection.getItems().addAll(Arrays.asList(
+				"Down", "Across", "Across Spin"
+		));
+
 		cableDirection.getSelectionModel().select(0);
 		context = canvas.getGraphicsContext2D();
 		
@@ -70,10 +76,10 @@ public class Display extends Application {
 			context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 			
 			OrbitalSimulation.State state = simulation.getState();
-			context.translate(canvas.getWidth() / 2, canvas.getHeight() / 2);
+			context.translate(canvas.getWidth() * 4 / 7, canvas.getHeight() / 2);
 			//context.strokeLine(0, 0, 100, 100);
 			
-			context.scale(3e-5, -3e-5);
+			context.scale(4e-5, -4e-5);
 			
 			context.setStroke(Color.BLUE);
 			for(double x = -9e6; x < 9e6; x += 4e5) {
@@ -101,26 +107,68 @@ public class Display extends Application {
 			
 			context.setTransform(new Affine());
 
-			// We project the torque onto the position vector to gain a +/- value for the magnitude of the torque.
-			Vec3 torqueDirection = simulation.getState().position.withLength(1.0);
-			
-			context.clearRect(0, 40, 200, 200);
-			context.fillText("Magnetic Field: " + (int) (simulation.getState().magneticField.length() * 1e6) + "uT", 50, 50);
-			context.fillText("Velocity: " + (int) (simulation.getState().velocity.length()) + "m/s", 50, 70);
-			context.fillText("Distance: " + (int) simulation.getState().position.length() + "m", 50, 90);
-			context.fillText("Lorentz Force: " + String.format("%.3f", simulation.getState().
-					lorentzForce.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uN", 50, 110);
-			context.fillText("Lorentz Torque: " + String.format("%.3f", simulation.getState().
-					lorentzTorque.dot(torqueDirection) * 1e3) + "mNm", 50, 130);
-			context.fillText("Current: " + String.format("%.3fmA", simulation.getState().current * 1e3), 50, 150);
-			context.fillText("Drag Force: " + String.format("%.3f", simulation.getState().
-					dragForce.dot(simulation.getState().velocity.withLength(1.0)) * 1e6) + "uN", 50, 170);
-			context.fillText("Drag Torque: " + String.format("%.3f", simulation.getState().
-					dragTorque.dot(torqueDirection) * 1e3) + "mNm", 50, 190);
-			context.fillText("Net Torque: " + String.format("%.3f", simulation.getState().
-					netTorque.dot(torqueDirection) * 1e3) + "mNm", 50, 210);
-			context.fillText("Average Torque: " + String.format("%.3f", simulation.getState().
-					netTorqueAverage * 1e3) + "mNm", 50, 230);
+			Vec3 torqueDirection = simulation.getState().velocity.cross(simulation.getState().cableVector).withLength(1.0);
+
+			List<String> items = new ArrayList<>(), names = new ArrayList<>();
+
+			Vec3 unitVelocity = state.velocity.withLength(1.0);
+
+			names.add("Height");
+			items.add(formatDouble(state.position.length() - UnderlyingModels.rE, "m"));
+
+			names.add("Velocity");
+			items.add(formatDouble(state.velocity.length(), "m/s"));
+
+			names.add("Lorentz Force");
+			items.add(formatDouble(state.lorentzForce.length(), "N"));
+
+			names.add("Field Strength");
+			items.add(formatDouble(state.magneticField.length(), "T"));
+
+			names.add("Voltage Gradient");
+			items.add(formatDouble(state.magneticField.cross(state.velocity).dot(state.cableVector.withLength(1.0)), "V/m"));
+
+			names.add("Bias");
+			items.add(formatDouble(state.emitterResult.chosenBias, "V"));
+
+			names.add("Current");
+			items.add(formatDouble(state.current, "A"));
+
+			names.add("Power Usage");
+			items.add(formatDouble(state.emitterResult.powerUsage, "W"));
+
+			names.add("Power Extracted");
+			items.add(formatDouble(-state.lorentzForce.dot(state.velocity), "W"));
+
+			displayTextItems(names, items);
+		}
+	}
+
+	private static final String[] prefix = { "T", "G", "M", "k", "", "m", "μ", "n", "p" };
+	private static final int onesIndex = 4;
+	private String formatDouble(double number, String unit) {
+		int index = onesIndex;
+
+		do {
+			if(Math.abs(number) < 1.0) {
+				index++;
+				number *= 1000.0;
+			} else if(Math.abs(number) > 1000.0) {
+				index--;
+				number /= 1000.0;
+			} else {
+				break;
+			}
+		} while(index > 0 && index < prefix.length - 1);
+
+		return String.format("%.3f %s%s", number, prefix[index], unit);
+	}
+
+	private void displayTextItems(List<String> names, List<String> items) {
+		context.clearRect(0, 0, 200, items.size() * 20 + 50);
+
+		for(int i = 0; i < names.size(); i++) {
+			context.fillText(names.get(i) + ": " + items.get(i), 10, 40 + i * 20);
 		}
 	}
 	
@@ -143,12 +191,43 @@ public class Display extends Application {
 
 			OrbitCharacteristics orbit = new OrbitCharacteristics(e, a, i, ω, v, Ω);
 
+			double bias, powerLimitNo, currentLimitNo;
+
+			bias = setBias.getText().isEmpty() ? Double.NaN : Double.parseDouble(setBias.getText());
+			powerLimitNo = powerLimit.getText().isEmpty() ? Double.NaN : Double.parseDouble(powerLimit.getText());
+			currentLimitNo = currentLimit.getText().isEmpty() ? Double.NaN : Double.parseDouble(currentLimit.getText());
+
+			if(!Double.isFinite(bias) && !Double.isFinite(powerLimitNo) && !Double.isFinite(currentLimitNo)) {
+				displayError("At least one of the emitter limits or bias must be defined");
+				return;
+			}
+
+			Emitter emitter = Emitter.createThermionicCathode(powerLimitNo, currentLimitNo, bias);
+
 			double m = Double.parseDouble(mass.getText());
-			Satellite satellite = new Satellite(cableDirection.getValue(), 0, m, UnderlyingModels.σAluminium);
+
+			CableFunction func;
+
+			switch(cableDirection.getValue()) {
+				case "Down":
+					func = CableFunction.towardsGravity(Double.parseDouble(cableLength.getText()));
+					break;
+				case "Across":
+					func = CableFunction.acrossVelocity(Double.parseDouble(cableLength.getText()));
+					break;
+				case "Across Spin":
+					func = CableFunction.acrossVelocitySpin(Double.parseDouble(cableLength.getText()));
+					break;
+				default:
+					throw new IllegalArgumentException(cableDirection.getValue() + " is not a valid direction.");
+			}
+
+			Satellite satellite = new Satellite(func, emitter, m, UnderlyingModels.σAluminium);
 
 			simulation = new OrbitalSimulation(orbit, satellite, simulation == null ? getTimeStep() : simulation.getTimeStep());
-		} catch(NumberFormatException nfe) {
+		} catch(IllegalArgumentException nfe) {
 			displayError("Error parsing data");
+			nfe.printStackTrace();
 			return;
 		}
 		

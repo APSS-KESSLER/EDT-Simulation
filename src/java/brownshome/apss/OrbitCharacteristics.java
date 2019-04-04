@@ -23,8 +23,8 @@ public class OrbitCharacteristics {
 		double cΩ, sΩ, ci, si, sωv, cωv, sv;
 		cΩ = cos(Ω);
 		sΩ = sin(Ω);
-		ci = cos(i);
-		si = sin(i);
+		ci = sin(i); // cos(pi/2 - x) = sin(x)
+		si = cos(i);
 		sωv = cos(ω + v);
 		cωv = sin(ω + v);
 		sv = sin(v);

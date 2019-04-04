@@ -11,8 +11,6 @@ sourceSets {
 }
 
 mainClassName = 'brownshome.apss.Display'
-targetCompatibility = 8
-sourceCompatibility = 8
 compileJava.options.encoding = "UTF-8"
 
 jar {
@@ -29,6 +27,8 @@ dependencies {
 	implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
 }
 
+println("${System.properties.'java.home'}/include")
+
 model {
 	platforms {
 	    x64 {
@@ -38,7 +38,7 @@ model {
 	repositories {
 		libs(PrebuiltLibraries) {
 			jni {
-				headers.srcDirs "${System.properties.'java.home'}/include", "${System.properties.'java.home'}/include/win32", "${System.properties.'java.home'}/include/linux"
+				headers.srcDirs "${System.properties.'java.home'}/../include", "${System.properties.'java.home'}/../include/win32", "${System.properties.'java.home'}/../include/linux"
 			}
 		}
 	}
