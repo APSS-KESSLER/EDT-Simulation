@@ -5,8 +5,8 @@ public class Satellite {
 	// Constants
 	public final static double CUBESAT_DRAG_COEFFICIENT = 2.2;
 	public final static double TETHER_DRAG_COEFFICIENT = 2.0;
-	public final static double DEFAULT_CABLE_WIDTH = 0.05; // metres
-	public final static double DEFAULT_CABLE_THICKNESS = 0.0005; // metres
+	public final static double DEFAULT_CABLE_WIDTH = 20e-3; // metres
+	public final static double DEFAULT_CABLE_THICKNESS = 35e-6; // metres
 	public final static double CUBESAT_DIMENSION = 0.1; // metres
 	public final static double DEFAULT_CABLE_DENSITY = 5000; // kg/m^3
 
