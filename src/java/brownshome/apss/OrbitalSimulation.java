@@ -88,15 +88,16 @@ public class OrbitalSimulation {
 				return;
 			}
 			
+			double equivilantDiameter = (OrbitalSimulation.this.satellite.cableThickness + OrbitalSimulation.this.satellite.cableWidth) * 2 / Math.PI;
+
 			// Eq (3)
 			// This is a scalar that is used to convert the voltage between the plasma and the tether to a dIdl value.
-			double dIdlConstant = -UnderlyingModels.e * plasmaDensity * OrbitalSimulation.this.satellite.cableDiameter * 
+			double dIdlConstant = -UnderlyingModels.e * plasmaDensity * equivilantDiameter * 
 					Math.sqrt(-2 * UnderlyingModels.e / UnderlyingModels.me);
 			
 			// Eq (4)
 			// This is the resistance of the cable in ohm / m
-			double resistivity = 1.0 / (Math.PI * OrbitalSimulation.this.satellite.cableDiameter
-					* OrbitalSimulation.this.satellite.cableDiameter / 4 * OrbitalSimulation.this.satellite.cableConductivity);
+			double resistivity = 1.0 / (OrbitalSimulation.this.satellite.cableThickness * OrbitalSimulation.this.satellite.cableWidth);
 			
 			//Keep iterating with different starting voltages to find the voltage where Vc + RI + Ve = Vemf * l, this should be findable with a binary search.
 			class Result {
@@ -214,7 +215,7 @@ public class OrbitalSimulation {
                     * Math.pow(Satellite.CUBESAT_DIMENSION, 2);
 
             double fTether = -0.5 * atmosphericDensity * Satellite.TETHER_DRAG_COEFFICIENT *
-                    Math.pow(velocity.length(),2)*effectiveAreaRatio*satellite.cableDiameter;
+                    Math.pow(velocity.length(),2)*effectiveAreaRatio*satellite.cableWidth; //TODO improve drag for taps
             double fTether1 = ((satellite.cableVector.cableLength-satellite.centreOfMass)/
                     satellite.cableVector.cableLength)*fTether;
             double fTether2 = (satellite.centreOfMass/satellite.cableVector.cableLength)*fTether;

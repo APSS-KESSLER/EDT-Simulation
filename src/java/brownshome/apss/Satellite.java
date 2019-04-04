@@ -5,24 +5,29 @@ public class Satellite {
 	// Constants
 	public final static double CUBESAT_DRAG_COEFFICIENT = 2.2;
 	public final static double TETHER_DRAG_COEFFICIENT = 2.0;
-	public final static double DEFAULT_CABLE_DIAMETER = 0.003; // metres
+	public final static double DEFAULT_CABLE_WIDTH = 0.05; // metres
+	public final static double DEFAULT_CABLE_THICKNESS = 0.0005; // metres
 	public final static double CUBESAT_DIMENSION = 0.1; // metres
 	public final static double DEFAULT_CABLE_DENSITY = 5000; // kg/m^3
 
 	public final CableFunction cableVector;
 	public final double mass;
-	public final double cableDiameter;
+
+	public final double cableWidth;
+	public final double cableThickness;
+
 	public final double cableConductivity;
 	public final double centreOfMass;
 	public final double cableDensity;
 	public final Emitter emitter;
 
 	/** This is the default constructor used by the MATLAB scripts */
-	public Satellite(CableFunction cableVector, Emitter emitter, double mass, double cableDiameter,
+	public Satellite(CableFunction cableVector, Emitter emitter, double mass, double cableWidth, double cableThickness,
 					 double cableConductivity, double cableDensity) {
 		this.cableVector = cableVector;
 		this.mass = mass;
-		this.cableDiameter = cableDiameter;
+		this.cableWidth = cableWidth;
+		this.cableThickness = cableThickness;
 		this.emitter = emitter;
 		this.cableConductivity = cableConductivity;
 		this.centreOfMass = centreOfMass();
@@ -30,11 +35,12 @@ public class Satellite {
 	}
 
 	/** This is a constructor used by the Java simulation program */
-	public Satellite(CableFunction cableVector, Emitter emitter, double mass, double cableDiameter,
+	public Satellite(CableFunction cableVector, Emitter emitter, double mass, double cableWidth, double cableThickness,
 					 double cableConductivity) {
 		this.cableVector = cableVector;
 		this.mass = mass;
-		this.cableDiameter = cableDiameter;
+		this.cableWidth = cableWidth;
+		this.cableThickness = cableThickness;
 		this.emitter = emitter;
 		this.cableConductivity = cableConductivity;
 		this.centreOfMass = centreOfMass();
@@ -46,7 +52,8 @@ public class Satellite {
 					 double cableConductivity) {
 		this.cableVector = cableVector;
 		this.mass = mass;
-		this.cableDiameter = DEFAULT_CABLE_DIAMETER;
+		this.cableWidth = DEFAULT_CABLE_WIDTH;
+		this.cableThickness = DEFAULT_CABLE_THICKNESS;
 		this.emitter = emitter;
 		this.cableConductivity = cableConductivity;
 		this.centreOfMass = centreOfMass();
@@ -60,7 +67,7 @@ public class Satellite {
 	 */
 	private double centreOfMass() {
 
-		double cableMass = cableDensity * Math.PI*Math.pow(cableDiameter/2, 2) * cableVector.cableLength;
+		double cableMass = cableDensity * cableWidth * cableThickness * cableVector.cableLength;
 
 		// Take the end of the tether
 		double cubeSatCentreOfMass = cableVector.cableLength + CUBESAT_DIMENSION/2;

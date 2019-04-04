@@ -50,7 +50,8 @@ public class APSSSimulator {
 			double inclination = Double.parseDouble(line.getOptionValue("inc", "0.0"));
 			double height = Double.parseDouble(line.getOptionValue("height", "6.771e6"));
 			double mass = Double.parseDouble(line.getOptionValue("mass", "1.0"));
-			double cableDiameter = Double.parseDouble(line.getOptionValue("diam", "0.001"));
+			double cableWidth = Double.parseDouble(line.getOptionValue("width", "0.005"));
+			double cableThickness = Double.parseDouble(line.getOptionValue("thickness", "0.0005"));
 			double conductivity = Double.parseDouble(line.getOptionValue("cond", Double.toString(UnderlyingModels.σAluminium)));
 			
 			CableFunction chosenFunction = null;
@@ -65,7 +66,7 @@ public class APSSSimulator {
 			}
 			
 			//TODO fill in drag values
-			Satellite sat = new Satellite(chosenFunction, Emitter.createThermionicCathode(), mass, cableDiameter, conductivity);
+			Satellite sat = new Satellite(chosenFunction, Emitter.createThermionicCathode(), mass, cableWidth, cableThickness, conductivity);
 
 			List<State> states = runHeadlessSimulation(sat, new OrbitCharacteristics(0.0, height, inclination, 0.0, 0.0, 0.0), Duration.ofHours(6), Duration.ofMinutes(1),
 					Duration.ofMillis(50));
