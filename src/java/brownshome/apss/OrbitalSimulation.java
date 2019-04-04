@@ -97,7 +97,7 @@ public class OrbitalSimulation {
 			
 			// Eq (4)
 			// This is the resistance of the cable in ohm / m
-			double resistivity = 1.0 / (OrbitalSimulation.this.satellite.cableThickness * OrbitalSimulation.this.satellite.cableWidth);
+			double resistivity = 1.0 / (OrbitalSimulation.this.satellite.cableThickness * OrbitalSimulation.this.satellite.cableWidth * OrbitalSimulation.this.satellite.cableConductivity);
 			
 			//Keep iterating with different starting voltages to find the voltage where Vc + RI + Ve = Vemf * l, this should be findable with a binary search.
 			class Result {
