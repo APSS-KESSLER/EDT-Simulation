@@ -2,6 +2,7 @@ package brownshome.apss;
 
 import static java.lang.Math.atan2;
 import static java.lang.Math.sqrt;
+import java.io.*;
 
 public class UnderlyingModels {
 	/** Radius of the earth (m)*/
@@ -72,33 +73,47 @@ public class UnderlyingModels {
 
 
 	public static Vec3 getGravitationalAcceleration(Vec3 position) {
-		double longitude = atan2(position.x, -position.z);
-		double latitude = atan2(position.y, sqrt(position.x * position.x + position.z * position.z));
+        double longitude = atan2(position.x, -position.z);
+        double latitude = atan2(position.y, sqrt(position.x * position.x + position.z * position.z));
 
 		// Altitude of satellite considering constant earth radius
 		double altitude = position.length() - rE;
 
-		String coordinates = longitude + " " + latitude + " " + altitude;
+		String coordinates = "\"" + longitude + " " + latitude + " " + altitude + "\"";
 
-		// Run the model using the most recent (2008) egm data
-		String acceleration = UnderlyingModels.runCommand("GeographicLib-1.49\\Gravity.exe --input-string \"" + coordinates + "\" -n egm2008");
+		// File path of the gravity model exe
+		String modelPath = "src\\library\\GeographicLib-1.49\\bin\\Gravity.exe ";
 
-		System.out.println("acceleration: " + acceleration);
+        // Run the model using the most recent (2008) egm data
+		String[] command = {modelPath, "--input-string", coordinates, "-n", "egm2008"};
+		String accelerationString = UnderlyingModels.runCommand(command);
 
-		// TODO: convert the string acceleration to vector
-		return new Vec3();
+		double[] acceleration = new double[3];
+		String[] accStrings = accelerationString.split(" ");
+
+		for(int i = 0; i < accStrings.length; i++) {
+            acceleration[i] = Double.parseDouble(accStrings[i]);
+        }
+
+        Vec3 NED = ENUtoNED(new Vec3(acceleration[0], acceleration[1], acceleration[2]));
+        Vec3 translatedNED = translateNED(NED, latitude, longitude);
+
+        System.out.println("NED! " + translatedNED);
+
+        //TODO: remove centrifugal acceleration.
+        //TODO: compute the correct altitude
+		return translatedNED;
 	}
 
-	public static String runCommand(String command) {
+	// Converts East, North, Up (default from gravity model) coordinates to North, East, Down.
+	public static Vec3 ENUtoNED(Vec3 ENU) {
+	    return new Vec3(ENU.y, ENU.x, -ENU.z);
+    }
 
-		// WARNING: METHOD IS A WIP. THIS CODE DOES NOT WORK.
-		// It stubbornly refuses to execute what i want it to.
-		// I think the command argument may need to be a string
-		// array but I could figure out how they should be ordered...
+	public static String runCommand(String[] command) {
 
 		try {
-			// using the Runtime exec method:
-			Process p = Runtime.getRuntime().exec(command);
+		    Process p = Runtime.getRuntime().exec(command);
 
 			BufferedReader stdInput = new BufferedReader(new
 					InputStreamReader(p.getInputStream()));
@@ -106,27 +121,25 @@ public class UnderlyingModels {
 			BufferedReader stdError = new BufferedReader(new
 					InputStreamReader(p.getErrorStream()));
 
-			String result = null, s;
+			String s = "", result = "";
 
 			// read the output from the command
-			System.out.println("Here is the standard output of the command:\n");
 			while ((s = stdInput.readLine()) != null) {
 				result = result + s;
 			}
 
 			// read any errors from the attempted command
-			System.out.println("Here is the standard error of the command (if any):\n");
 			while ((s = stdError.readLine()) != null) {
 				System.out.println(s);
 			}
 
 			return result;
-			System.exit(0);
 		}
 		catch (IOException e) {
 			System.out.println("exception happened - here's what I know: ");
 			e.printStackTrace();
 			System.exit(-1);
 		}
+		return "";
 	}
 }
