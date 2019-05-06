@@ -125,6 +125,9 @@ public class Display extends Application {
 			names.add("Field Strength");
 			items.add(formatDouble(state.magneticField.length(), "T"));
 
+			names.add("Electron Density");
+			items.add(formatDouble(state.plasmaDensity, "e/m3"));
+
 			names.add("Voltage Gradient");
 			items.add(formatDouble(state.magneticField.cross(state.velocity).dot(state.cableVector.withLength(1.0)), "V/m"));
 

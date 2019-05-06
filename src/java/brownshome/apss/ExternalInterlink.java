@@ -47,6 +47,10 @@ public class ExternalInterlink {
 		toProcess.println();
 	}
 
+	public void send(double d) {
+		toProcess.println(d);
+	}
+
 	public String readString() throws IOException {
 		// We flush to ensure that the program has received all commands before we wait for input
 		toProcess.flush();
