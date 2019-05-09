@@ -19,7 +19,8 @@ public class UnderlyingModels {
 	public static final double  σAluminium = 3.50e7;
 
 	private static final double plasmaDensity = 3.16228e11;
-	
+
+
 	static {
 		System.loadLibrary("library");
 		if(!initializeWMMData()) {
@@ -71,10 +72,10 @@ public class UnderlyingModels {
 	    return 1.93e-11; // TODO better value
     }
 
-
 	public static Vec3 getGravitationalAcceleration(Vec3 position) {
-        double longitude = atan2(position.x, -position.z);
-        double latitude = atan2(position.y, sqrt(position.x * position.x + position.z * position.z));
+
+		double longitude = atan2(position.x, -position.z);
+		double latitude = atan2(position.y, sqrt(position.x * position.x + position.z * position.z));
 
 		// Altitude of satellite considering constant earth radius
 		double altitude = position.length() - rE;
@@ -84,24 +85,24 @@ public class UnderlyingModels {
 		// File path of the gravity model exe
 		String modelPath = "src\\library\\GeographicLib-1.49\\bin\\Gravity.exe ";
 
-        // Run the model using the most recent (2008) egm data
+		// Run the model using the most recent (2008) egm data
 		String[] command = {modelPath, "--input-string", coordinates, "-n", "egm2008"};
 		String accelerationString = UnderlyingModels.runCommand(command);
 
 		double[] acceleration = new double[3];
 		String[] accStrings = accelerationString.split(" ");
 
-		for(int i = 0; i < accStrings.length; i++) {
-            acceleration[i] = Double.parseDouble(accStrings[i]);
-        }
+		for (int i = 0; i < accStrings.length; i++) {
+			acceleration[i] = Double.parseDouble(accStrings[i]);
+		}
 
-        Vec3 NED = ENUtoNED(new Vec3(acceleration[0], acceleration[1], acceleration[2]));
-        Vec3 translatedNED = translateNED(NED, latitude, longitude);
+		Vec3 NED = ENUtoNED(new Vec3(acceleration[0], acceleration[1], acceleration[2]));
+		Vec3 translatedNED = translateNED(NED, latitude, longitude);
 
-        System.out.println("NED! " + translatedNED);
+//        //TODO: remove centrifugal acceleration.
+//        //TODO: compute the correct altitude
 
-        //TODO: remove centrifugal acceleration.
-        //TODO: compute the correct altitude
+		System.out.println(translatedNED);
 		return translatedNED;
 	}
 
@@ -111,7 +112,7 @@ public class UnderlyingModels {
     }
 
 	public static String runCommand(String[] command) {
-
+		long start = System.nanoTime();
 		try {
 		    Process p = Runtime.getRuntime().exec(command);
 
@@ -134,6 +135,7 @@ public class UnderlyingModels {
 			}
 
 			return result;
+
 		}
 		catch (IOException e) {
 			System.out.println("exception happened - here's what I know: ");

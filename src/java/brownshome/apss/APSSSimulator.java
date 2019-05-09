@@ -68,7 +68,7 @@ public class APSSSimulator {
 			Satellite sat = new Satellite(chosenFunction, Emitter.createThermionicCathode(), mass, cableDiameter, conductivity);
 
 			List<State> states = runHeadlessSimulation(sat, new OrbitCharacteristics(0.0, height, inclination, 0.0, 0.0, 0.0), Duration.ofHours(6), Duration.ofMinutes(1),
-					Duration.ofMillis(50));
+					Duration.ofMillis(500));
 			
 			try(BufferedWriter writer = Files.newBufferedWriter(Paths.get("output.csv"), 
 					StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
