@@ -26,6 +26,25 @@
 
 #include "Gravity.usage"
 
+void generateGravityModel() {
+  std::string model = "egm2008", dir;
+
+  const GravityModel g(model, dir);
+
+}
+
+real* getGravitationalAcceleration(real longitude, real latitude, real altitude) {
+    real gx, gy, gz;
+    g.Gravity(latitude, longitude, altitude, gx, gy, gz);
+
+    static double acceleration[3];
+    acceleration[0] = gx;
+    acceleration[1] = gy;
+    acceleration[2] = gz;
+
+    return acceleration;
+}
+
 int main(int argc, const char* const argv[]) {
   try {
     using namespace GeographicLib;
