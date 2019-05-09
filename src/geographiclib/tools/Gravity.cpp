@@ -30,7 +30,6 @@ void generateGravityModel() {
   std::string model = "egm2008", dir;
 
   const GravityModel g(model, dir);
-
 }
 
 real* getGravitationalAcceleration(real longitude, real latitude, real altitude) {
@@ -65,6 +64,9 @@ int main(int argc, const char* const argv[]) {
       UNDULATION = 3,
     };
     unsigned mode = GRAVITY;
+
+    // THE ONLY PARAMETERS WE USED WERE: -n "egm2008", ---input-string (long, lat, a)
+
     for (int m = 1; m < argc; ++m) {
       std::string arg(argv[m]);
       if (arg == "-n") {
@@ -147,6 +149,7 @@ int main(int argc, const char* const argv[]) {
       }
     }
 
+    //WE DO NOT ENTER THESE IF STATEMENTS
     if (!ifile.empty() && !istring.empty()) {
       std::cerr << "Cannot specify --input-string and --input-file together\n";
       return 1;
@@ -160,6 +163,9 @@ int main(int argc, const char* const argv[]) {
         std::cerr << "Cannot open " << ifile << " for reading\n";
         return 1;
       }
+
+
+    //WE ENTER THIS IF STATEMENT, istring consists of long, lat, h input
     } else if (!istring.empty()) {
       std::string::size_type m = 0;
       while (true) {
@@ -170,9 +176,12 @@ int main(int argc, const char* const argv[]) {
       }
       instring.str(istring);
     }
+
+    //input = &instring
     std::istream* input = !ifile.empty() ? &infile :
       (!istring.empty() ? &instring : &std::cin);
 
+    //WE DO NOT ENTER THESE, ofile is not set.
     std::ofstream outfile;
     if (ofile == "-") ofile.clear();
     if (!ofile.empty()) {
@@ -182,8 +191,11 @@ int main(int argc, const char* const argv[]) {
         return 1;
       }
     }
+
+    // print output to console
     std::ostream* output = !ofile.empty() ? &outfile : &std::cout;
 
+    //PRECISION NOT RELEVANT
     switch (mode) {
     case GRAVITY:
       prec = std::min(16 + Math::extra_digits(), prec < 0 ? 5 : prec);
@@ -198,6 +210,9 @@ int main(int argc, const char* const argv[]) {
       break;
     }
     int retval = 0;
+
+
+    //THIS IS WHERE WE MAKE THE MODEL :)
     try {
       const GravityModel g(model, dir);
       if (circle) {
