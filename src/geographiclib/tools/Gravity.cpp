@@ -26,15 +26,13 @@
 
 #include "Gravity.usage"
 
-void generateGravityModel() {
-  std::string model = "egm2008", dir;
-
-  const GravityModel g(model, dir);
-}
+//Unsure if this is valid syntax, but this is essentially all we need
+GravityModel gravityModel("egm2008", "");
 
 real* getGravitationalAcceleration(real longitude, real latitude, real altitude) {
     real gx, gy, gz;
-    g.Gravity(latitude, longitude, altitude, gx, gy, gz);
+
+    gravityModel.Gravity(latitude, longitude, altitude, gx, gy, gz);
 
     static double acceleration[3];
     acceleration[0] = gx;
@@ -43,6 +41,7 @@ real* getGravitationalAcceleration(real longitude, real latitude, real altitude)
 
     return acceleration;
 }
+
 
 int main(int argc, const char* const argv[]) {
   try {
