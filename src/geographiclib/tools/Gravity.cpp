@@ -26,8 +26,9 @@
 
 #include "Gravity.usage"
 
-//Unsure if this is valid syntax, but this is essentially all we need
-GravityModel gravityModel("egm2008", "");
+using namespace GeographicLib;
+
+static GravityModel gravityModel("egm2008", "");
 
 real* getGravitationalAcceleration(real longitude, real latitude, real altitude) {
     real gx, gy, gz;
