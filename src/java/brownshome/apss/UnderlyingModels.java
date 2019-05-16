@@ -1,6 +1,6 @@
 package brownshome.apss;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
 
 import static java.lang.Math.atan2;
@@ -165,12 +165,13 @@ public class UnderlyingModels {
 			}
 
 			return result;
-			System.exit(0);
 		}
 		catch (IOException e) {
 			System.out.println("exception happened - here's what I know: ");
 			e.printStackTrace();
 			System.exit(-1);
 		}
+
+		return "";
 	}
 }
