@@ -25,6 +25,7 @@ public class UnderlyingModels {
 
 	static {
 		System.loadLibrary("library");
+
 		if(!initializeWMMData()) {
 			throw new OutOfMemoryError();
 		}
@@ -72,7 +73,8 @@ public class UnderlyingModels {
 	private static native Vec3 getWMMData(double latitude, double longitude, double height, double time);
 
 	private static native boolean initializeWMMData();
-	
+	private static native void initializeGravityData();
+
 	/** e per m3 */
 	public static double getPlasmaDensity(Vec3 position) {
 		// Year
@@ -116,22 +118,17 @@ public class UnderlyingModels {
 
 
 	public static Vec3 getGravitationalAcceleration(Vec3 position) {
-		double longitude = atan2(position.x, -position.z);
-		double latitude = atan2(position.y, sqrt(position.x * position.x + position.z * position.z));
+		double longitude = atan2(position.x, -position.z) * 180.0 / Math.PI;
+		double latitude = atan2(position.y, sqrt(position.x * position.x + position.z * position.z)) * 180.0 / Math.PI;
 
 		// Altitude of satellite considering constant earth radius
 		double altitude = position.length() - rE;
 
-		String coordinates = longitude + " " + latitude + " " + altitude;
-
 		// Run the model using the most recent (2008) egm data
-		String acceleration = UnderlyingModels.runCommand("GeographicLib-1.49\\Gravity.exe --input-string \"" + coordinates + "\" -n egm2008");
-
-		System.out.println("acceleration: " + acceleration);
-
-		// TODO: convert the string acceleration to vector
-		return new Vec3();
+		return getGravitationalAcceleration(latitude, longitude, altitude);
 	}
+
+	private static native Vec3 getGravitationalAcceleration(double latitude, double longitude, double altitude);
 
 	public static String runCommand(String command) {
 

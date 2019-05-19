@@ -3,11 +3,24 @@
 #include "GeomagnetismHeader.h"
 #include "EGM9615.h"
 
+#include "gravityC.h"
+
 MAGtype_Geoid Geoid;
 MAGtype_Ellipsoid Ellip;
 MAGtype_MagneticModel *MagneticModels[1], *TimedMagneticModel;
 MAGtype_LegendreFunction *LegendreFunction;
 MAGtype_SphericalHarmonicVariables *SphVariables;
+
+JNIEXPORT jobject JNICALL Java_brownshome_apss_UnderlyingModels_getGravitationalAcceleration(JNIEnv *env,  jclass class, jdouble latitude, jdouble longitude, jdouble altitude) {
+	double gx, gy, gz;	
+	getGravitationalAcceleration(latitude, longitude, altitude, &gx, &gy, &gz);
+
+	jclass cls = (*env)->FindClass(env, "brownshome/apss/Vec3");
+	jmethodID constructor = (*env)->GetMethodID(env, cls, "<init>", "(DDD)V");
+	jobject object = (*env)->NewObject(env, cls, constructor, gx, gy, gz);
+
+	return object;
+}
 
 JNIEXPORT jboolean JNICALL Java_brownshome_apss_UnderlyingModels_initializeWMMData(JNIEnv *env, jclass class) {
 	int epochs = 1;

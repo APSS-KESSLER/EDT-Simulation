@@ -48,7 +48,7 @@ model {
 			binaries.all {
 				if (toolChain in Gcc) {
 					cppCompiler.args '-std=c11'
-					linker.args '-fPIC'
+					linker.args '-fPIC', 'Gravity.o', 'libGeographic.a'
 				}
 			}
 		
