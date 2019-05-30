@@ -5,7 +5,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.DoubleFunction;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -26,7 +25,7 @@ import javafx.stage.Stage;
 public class Display extends Application {
 	/** Satellite text fields */
 	@FXML private TextField eccentricity, semiMajorAxis, trueAnomaly, inclination, argumentOfPeriapsis,
-			longitudeOfAscendingNode, mass, setBias, currentLimit, powerLimit, cableLength;
+			longitudeOfAscendingNode, mass, endMass, setBias, currentLimit, powerLimit, cableLength;
 
 	@FXML private ChoiceBox<String> cableDirection;
 	
@@ -84,7 +83,7 @@ public class Display extends Application {
 			context.setStroke(Color.BLUE);
 			for(double x = -9e6; x < 9e6; x += 4e5) {
 				for(double y = -9e6; y < 9e6; y += 4e5) {
-					Vec3 v = new Vec3(x, y, state.position.z);
+					Vec3 v = new Vec3(x, y, state.averagePosition.z);
 					
 					if(v.lengthSquared() < UnderlyingModels.rE * UnderlyingModels.rE * 0.5)
 						continue;
@@ -97,39 +96,32 @@ public class Display extends Application {
 			context.setFill(Color.LIGHTSKYBLUE);
 			context.fillOval(-UnderlyingModels.rE, -UnderlyingModels.rE, UnderlyingModels.rE * 2, UnderlyingModels.rE * 2);
 			
-			context.setStroke(Color.RED);
-			drawVector(state.cableVector.withLength(1e6), state.position);
+			//context.setStroke(Color.RED);
+			//drawVector(state.cableVector.withLength(1e6), state.position);
 			
 			context.setFill(Color.BLACK);
-			context.fillOval(state.position.x - SAT_SIZE / 2, state.position.y - SAT_SIZE / 2, SAT_SIZE, SAT_SIZE);
+			context.fillOval(state.averagePosition.x - SAT_SIZE / 2, state.averagePosition.y - SAT_SIZE / 2, SAT_SIZE, SAT_SIZE);
 			
 			context.setLineWidth(2e4);
 			
 			context.setTransform(new Affine());
 
-			Vec3 torqueDirection = simulation.getState().velocity.cross(simulation.getState().cableVector).withLength(1.0);
-
 			List<String> items = new ArrayList<>(), names = new ArrayList<>();
 
-			Vec3 unitVelocity = state.velocity.withLength(1.0);
-
 			names.add("Height");
-			items.add(formatDouble(state.position.length() - UnderlyingModels.rE, "m"));
+			items.add(formatDouble(state.averagePosition.length() - UnderlyingModels.rE, "m"));
 
 			names.add("Velocity");
-			items.add(formatDouble(state.velocity.length(), "m/s"));
+			items.add(formatDouble(state.averageVelocity.length(), "m/s"));
 
 			names.add("Lorentz Force");
-			items.add(formatDouble(state.lorentzForce.length(), "N"));
+			items.add(formatDouble(state.totalLorentzForce.length(), "N"));
 
 			names.add("Field Strength");
 			items.add(formatDouble(state.magneticField.length(), "T"));
 
 			names.add("Electron Density");
 			items.add(formatDouble(state.plasmaDensity, "e/m3"));
-
-			names.add("Voltage Gradient");
-			items.add(formatDouble(state.magneticField.cross(state.velocity).dot(state.cableVector.withLength(1.0)), "V/m"));
 
 			names.add("Bias");
 			items.add(formatDouble(state.emitterResult.chosenBias, "V"));
@@ -141,7 +133,7 @@ public class Display extends Application {
 			items.add(formatDouble(state.emitterResult.powerUsage, "W"));
 
 			names.add("Power Extracted");
-			items.add(formatDouble(-state.lorentzForce.dot(state.velocity), "W"));
+			items.add(formatDouble(-state.totalLorentzForce.dot(state.averageVelocity), "W"));
 
 			displayTextItems(names, items);
 		}
@@ -208,6 +200,7 @@ public class Display extends Application {
 			Emitter emitter = Emitter.createThermionicCathode(powerLimitNo, currentLimitNo, bias);
 
 			double m = Double.parseDouble(mass.getText());
+			double em = Double.parseDouble(endMass.getText());
 
 			CableFunction func;
 
@@ -218,14 +211,11 @@ public class Display extends Application {
 				case "Across":
 					func = CableFunction.acrossVelocity(Double.parseDouble(cableLength.getText()));
 					break;
-				case "Across Spin":
-					func = CableFunction.acrossVelocitySpin(Double.parseDouble(cableLength.getText()));
-					break;
 				default:
 					throw new IllegalArgumentException(cableDirection.getValue() + " is not a valid direction.");
 			}
 
-			Satellite satellite = new Satellite(func, emitter, m, UnderlyingModels.σAluminium);
+			Satellite satellite = new Satellite(func, orbit, emitter, m, em, UnderlyingModels.σAluminium);
 
 			simulation = new OrbitalSimulation(orbit, satellite, simulation == null ? getTimeStep() : simulation.getTimeStep());
 		} catch(IllegalArgumentException nfe) {

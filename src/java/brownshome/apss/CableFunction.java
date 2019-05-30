@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 import brownshome.apss.OrbitalSimulation.State;
 
-public abstract class CableFunction implements Function<OrbitalSimulation.State, Vec3> {
+public abstract class CableFunction implements Function<OrbitCharacteristics, Vec3> {
 	private String name;
 
 	public static final List<CableFunction> CABLE_FUNCTIONS;
@@ -19,6 +19,9 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 				towardsGravity(50),
 				towardsGravity(100),
 				towardsGravity(200),
+				towardsGravity(500),
+				towardsGravity(1000),
+
 
 				acrossVelocity(25),
 				acrossVelocity(50),
@@ -36,8 +39,8 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 	public static CableFunction towardsGravity(double distance) {
 		return new CableFunction("Towards gravity - " + distance + "m", distance) {
 			@Override
-			public Vec3 getCableDirection(State state) {
-				return state.gravity;
+			public Vec3 getCableDirection(OrbitCharacteristics orbit) {
+				return orbit.position.withLength(1.0);
 			}
 		};
 	}
@@ -45,25 +48,8 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 	public static CableFunction acrossVelocity(double distance) {
 		return new CableFunction("Across velocity - " + distance + "m", distance) {
 			@Override
-			public Vec3 getCableDirection(State state) {
-				return state.position.cross(state.velocity);
-			}
-		};
-	}
-
-	public static CableFunction acrossVelocitySpin(double distance) {
-		return new CableFunction("Across velocity Spun - " + distance + "m", distance) {
-			@Override
-			public Vec3 getCableDirection(State state) {
-				Vec3 base = state.position.cross(state.velocity);
-
-				// This needs to rotate around state.position - use a matrix
-				// The angle (time % period) / period * 2PI radians if spin is constant speed
-				// Find angular displacement as angular displacement plus instantaneous angular speed times time step
-				// Find angular speed as angular speed plus torque divided by inertia
-				// We need to calculate moment of inertia
-				//return base.rotateY(time % period);
-				return new Vec3();
+			public Vec3 getCableDirection(OrbitCharacteristics orbit) {
+				return orbit.position.cross(orbit.velocity).withLength(1.0);
 			}
 		};
 	}
@@ -73,10 +59,10 @@ public abstract class CableFunction implements Function<OrbitalSimulation.State,
 		return name;
 	}
 
-	public abstract Vec3 getCableDirection(State state);
+	public abstract Vec3 getCableDirection(OrbitCharacteristics orbit);
 
     @Override
-    public Vec3 apply(State state) {
-        return getCableDirection(state).withLength(cableLength);
+    public Vec3 apply(OrbitCharacteristics orbit) {
+        return getCableDirection(orbit).withLength(cableLength);
     }
 }

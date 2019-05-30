@@ -63,11 +63,13 @@ public class APSSSimulator {
 			if(chosenFunction == null) {
 				throw new ParseException("No function found: " + CableFunction.CABLE_FUNCTIONS.toString());
 			}
-			
-			//TODO fill in drag values
-			Satellite sat = new Satellite(chosenFunction, Emitter.createThermionicCathode(), mass, cableDiameter, conductivity);
 
-			List<State> states = runHeadlessSimulation(sat, new OrbitCharacteristics(0.0, height, inclination, 0.0, 0.0, 0.0), Duration.ofHours(6), Duration.ofMinutes(1),
+			OrbitCharacteristics orbit = new OrbitCharacteristics(0.0, height, inclination, 0.0, 0.0, 0.0);
+
+			//TODO fill in drag values
+			Satellite sat = new Satellite(chosenFunction, orbit, Emitter.createThermionicCathode(), mass, 0.05, cableDiameter, conductivity);
+
+			List<State> states = runHeadlessSimulation(sat, orbit, Duration.ofHours(6), Duration.ofMinutes(1),
 					Duration.ofMillis(50));
 			
 			try(BufferedWriter writer = Files.newBufferedWriter(Paths.get("output.csv"), 
@@ -77,9 +79,9 @@ public class APSSSimulator {
 				for(State state : states) {
 					writer.write(String.format("\"%.3f\",\"%.3e\",\"%.3e\",\"%.3e\",\"%.3e\",\"%.3e\"\n", 
 							state.time / 1e9,
-							state.velocity.length(),
-							state.lorentzForce.length(),
-							state.position.length(),
+							state.averageVelocity.length(),
+							state.totalLorentzForce.length(),
+							state.averagePosition.length(),
 							state.current,
 							state.magneticField.length()));
 				}
@@ -115,7 +117,7 @@ public class APSSSimulator {
 				break;
 			}
 			
-			if(simulation.getState().position.length() < 6.371e6) {
+			if(simulation.getState().averagePosition.length() < 6.371e6) {
 				System.out.println("Tether impacted Earth");
 				break;
 			}

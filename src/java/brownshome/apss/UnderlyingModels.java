@@ -21,7 +21,7 @@ public class UnderlyingModels {
 	public static final double  σAluminium = 3.50e7;
 
 	/** External program links */
-	private static final ExternalInterlink plasmaModel = new ExternalInterlink(Arrays.asList("python3", "getElectronDensity.py"));
+	private static final ExternalInterlink plasmaModel = new ExternalInterlink(Arrays.asList("python", "getElectronDensity.py"));
 
 	static {
 		System.loadLibrary("library");
