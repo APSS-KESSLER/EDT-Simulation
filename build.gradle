@@ -1,5 +1,4 @@
 plugins {
-	id 'c'
 	id 'application'
 }
 
@@ -27,47 +26,7 @@ dependencies {
 	implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
 }
 
-model {
-	platforms {
-	    x64 {
-            architecture 'x64'
-        }
-    }
-	repositories {
-		libs(PrebuiltLibraries) {
-			jni {
-				headers.srcDirs "${System.properties.'java.home'}/include", "${System.properties.'java.home'}/include/win32", "${System.properties.'java.home'}/include/linux"
-			}
-		}
-	}
-	
-	components {
-		library(NativeLibrarySpec) {
-			targetPlatform 'x64'
-		
-			binaries.all {
-				if (toolChain in Gcc) {
-					cppCompiler.args '-std=c11'
-					linker.args '-fPIC', 'Gravity.o', 'libGeographic.a'
-				}
-			}
-		
-			sources {
-				c {
-					lib library: 'jni', linkage: 'api'
-				}
-			}
-		}
-	}
-}
-
-//The native tasks are added very late in the process, much irritation
-tasks.whenTaskAdded { t ->
-	if(t.name.equals('linkLibrarySharedLibrary')) {
-		run { 
-			systemProperty 'java.library.path', "$buildDir/libs/library/shared"
-			dependsOn t
-		}
-	}
+run { 
+	systemProperty 'java.library.path', "nativeLib"
 }
 
